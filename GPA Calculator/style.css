@@ -656,6 +656,36 @@ select.form-control {
   }
 }
 
+
+/* Navigation Buttons - Desktop & Mobile */
+.nav-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nav-btn {
+  padding: 0.875rem 1.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--bis-primary);
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  background: white;
+}
+
 @media (max-width: 768px) {
   body {
     padding: 1rem 0.5rem 3rem 0.5rem;
@@ -715,35 +745,6 @@ select.form-control {
   .selection-card {
     padding: 1.25rem;
   }
-  .nav-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-
-.nav-btn {
-    padding: 0.875rem 1.75rem;
-    background: rgba(255, 255, 255, 0.95);
-    color: var(--bis-primary);
-    text-decoration: none;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.nav-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    background: white;
-}
-
   .controls {
     flex-direction: column;
     gap: 0.75rem;

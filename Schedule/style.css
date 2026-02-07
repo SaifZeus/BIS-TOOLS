@@ -239,6 +239,25 @@ body::before {
     box-shadow: var(--shadow-md);
 }
 
+.subject-card.subject-locked {
+    background: #f3f4f6;
+    opacity: 0.6;
+    pointer-events: none;
+    border-color: #9ca3af;
+}
+
+.locked-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 0.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
 .subject-header {
     display: flex;
     align-items: center;
@@ -286,6 +305,13 @@ body::before {
     background: linear-gradient(135deg, var(--bis-accent) 0%, var(--bis-light) 100%);
     color: white;
     border-color: var(--bis-accent);
+}
+
+.doctor-item.disabled {
+    background: #e5e7eb;
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 .doctor-name {
@@ -427,6 +453,20 @@ body::before {
     }
 }
 
+.drag-target-highlight {
+    position: relative;
+    animation: pulse-gentle 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-gentle {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
 .time-slot {
     font-weight: 600;
     color: var(--bis-primary);
@@ -493,6 +533,18 @@ body::before {
     margin-top: 0.25rem;
     opacity: 0.85;
     font-style: italic;
+}
+
+.slot-delete-hint {
+    font-size: 0.6rem;
+    margin-top: 0.3rem;
+    opacity: 0.7;
+    font-style: italic;
+    display: none;
+}
+
+.slot-confirmed:hover .slot-delete-hint {
+    display: block;
 }
 
 .slot-empty {

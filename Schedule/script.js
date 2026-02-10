@@ -10,14 +10,27 @@ const timeSlots = [
 
 const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
-// 2. Data (Level 2) - UPDATED: No 'code' property, only 'name'
+// 2. Data - UPDATED: No 'code' property, only 'name'
 const updatedCoursesData = {
+    1: [
+        // Coming Soon - Level 1 data will be added here later
+        // {
+        //     name: '⚠️ Coming Soon',
+        //     color: '#94a3b8',
+        //     doctors: [
+        //         { 
+        //             name: 'Level 1 courses will be added soon', 
+        //             schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'INFO'}] }] 
+        //         }
+        //     ]
+        // }
+    ],
     2: [
         {
             name: 'Money and Banking',
             color: '#ef4444',
             doctors: [
-                { name: 'Dr. Mahmoud Eltony', schedule: [{ day: 'Saturday', slots: [{id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }, { day: 'Sunday', slots: [{id: 2, g: 'G21'}, {id: 3, g: 'G22'}, {id: 4, g: 'G20'}] }] },
+                { name: 'Dr. Mahmoud Eltony', schedule: [{ day: 'Saturday', slots: [{id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G20'}, {id: 2, g: 'G21'}, {id: 3, g: 'G22'}] }] },
                 { name: 'Dr. Mohamed Abdel Wahid', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 3, g: 'G3'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G4'}, {id: 2, g: 'G5'}, {id: 3, g: 'G6'}] }, { day: 'Monday', slots: [{id: 1, g: 'G7'}, {id: 2, g: 'G8'}, {id: 3, g: 'G9'}] }] },
                 { name: 'Dr. Gaber Abdel Gawad', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G10'}, {id: 2, g: 'G11'}, {id: 3, g: 'G12'}] }, { day: 'Monday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}, {id: 3, g: 'G15'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G16'}, {id: 2, g: 'G17'}] }] },
                 { name: 'Dr. Thoraya', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G24'}, {id: 2, g: 'G25'}, {id: 3, g: 'G26'}] }] }
@@ -27,10 +40,8 @@ const updatedCoursesData = {
             name: 'Accounting for Corporations',
             color: '#3b82f6',
             doctors: [
-                { name: 'Dr. Amr Hassan', schedule: [
-                    { day: 'Sunday', slots: [{id: 1, g: 'G10'}, {id: 2, g: 'G11'}] },
-                    { day: 'Monday', slots: [{id: 1, g: 'G12'}, {id: 2, g: 'G13'}] }
-                ]},                { name: 'Dr. Mohamed El Ardy', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G3'}, {id: 2, g: 'G4'}, {id: 4, g: 'G5'}] }, { day: 'Monday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}] }] },
+                { name: 'Dr. Amr Hassan', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G10'}, {id: 2, g: 'G11'}] }] },
+                { name: 'Dr. Mohamed El Ardy', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G3'}, {id: 2, g: 'G4'}, {id: 4, g: 'G5'}] }, { day: 'Monday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}] }] },
                 { name: 'Dr. Ahmed Ibrahim', schedule: [{ day: 'Saturday', slots: [{id: 3, g: 'G14'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}, {id: 4, g: 'G17'}] }] },
                 { name: 'Dr. Soha Samir', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G18'}, {id: 2, g: 'G19'}, {id: 3, g: 'G20'}] }, { day: 'Monday', slots: [{id: 1, g: 'G21'}, {id: 2, g: 'G22'}, {id: 3, g: 'G23'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G24'}, {id: 2, g: 'G25'}, {id: 3, g: 'G26'}] }] },
                 { name: 'Dr. Yasmeen Abdel Aal', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}] }] },
@@ -90,6 +101,91 @@ const updatedCoursesData = {
                 { name: 'Dr. Nahla El Shourbagy', schedule: [{ day: 'Thursday', slots: [{id: 3, g: 'G22'}, {id: 4, g: 'G23'}] }] }
             ]
         }
+    ],
+    3: [
+        {
+            name: 'Economics of Information',
+            color: '#6366f1',
+            doctors: [
+                { name: 'Dr. Somaya Abdel Mawla', schedule: [{ day: 'Saturday', slots: [{id: 4, g: 'G4'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G5'}, {id: 2, g: 'G6'}, {id: 3, g: 'G7'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] },
+                { name: 'Dr. Shaimaa Wehbe', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G17'}, {id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }, { day: 'Monday', slots: [{id: 1, g: 'G20'}, {id: 2, g: 'G21'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 3, g: 'G24'}] }] },
+                { name: 'Dr. Rasha El Kordi', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}, {id: 3, g: 'G13'}] }, { day: 'Monday', slots: [{id: 1, g: 'G14'}, {id: 2, g: 'G15'}, {id: 3, g: 'G16'}] }] },
+                { name: 'Dr. Omar Salman', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 3, g: 'G3'}] }] }
+            ]
+        },
+        {
+            name: 'Auditing',
+            color: '#06b6d4',
+            doctors: [
+                { name: 'Dr. Eman Saad El Din', schedule: [{ day: 'Saturday', slots: [{id: 5, g: 'G18'}] }, { day: 'Monday', slots: [{id: 1, g: 'G19'}, {id: 2, g: 'G20'}, {id: 3, g: 'G21'}] }] },
+                { name: 'Dr. Ashraf Mansour', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G9'}, {id: 2, g: 'G10'}, {id: 3, g: 'G11'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G12'}, {id: 2, g: 'G13'}, {id: 3, g: 'G14'}] }, { day: 'Monday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}, {id: 3, g: 'G17'}] }] },
+                { name: 'Dr. Hanan Jaber', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G3'}, {id: 2, g: 'G4'}, {id: 3, g: 'G5'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}, {id: 3, g: 'G8'}] }] },
+                { name: 'Dr. Hamdy Habl', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 3, g: 'G24'}] }] }
+            ]
+        },
+        {
+            name: 'Management Information Systems',
+            color: '#84cc16',
+            doctors: [
+                { name: 'Dr. Ahmed Mounir', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}, {id: 3, g: 'G13'}] }, { day: 'Monday', slots: [{id: 1, g: 'G10'}] }] },
+                { name: 'Dr. Bishoy', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G17'}, {id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }] },
+                { name: 'Dr. Christina Albert', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G4'}, {id: 2, g: 'G5'}, {id: 3, g: 'G6'}] }] },
+                { name: 'Dr. Shirin Tayea', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G7'}, {id: 2, g: 'G8'}, {id: 3, g: 'G9'}] }] },
+                { name: 'Dr. Yehia Helmy', schedule: [{ day: 'Monday', slots: [{id: 2, g: 'G1'}, {id: 3, g: 'G2'}, {id: 4, g: 'G3'}] }] },
+                { name: 'Dr. Dalia Magdy', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G14'}, {id: 2, g: 'G15'}, {id: 3, g: 'G16'}] }] },
+                { name: 'Dr. Dina Helal', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G20'}, {id: 2, g: 'G21'}, {id: 3, g: 'G22'}] }] }
+            ]
+        },
+        {
+            name: 'Internet Application',
+            color: '#f43f5e',
+            doctors: [
+                { name: 'Dr. Amani Ahmed', schedule: [{ day: 'Saturday', slots: [{id: 3, g: 'G7'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] },
+                { name: 'Dr. Iman Hanafi', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 3, g: 'G24'}] }] },
+                { name: 'Dr. Mortada Salah El Din', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 4, g: 'G3'}] }] },
+                { name: 'Dr. Ibrahim Zaghloul', schedule: [{ day: 'Monday', slots: [{id: 2, g: 'G4'}, {id: 3, g: 'G5'}, {id: 4, g: 'G6'}] }] },
+                { name: 'Dr. Nanis Nabil', schedule: [{ day: 'Tuesday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G17'}, {id: 2, g: 'G18'}] }] },
+                { name: 'Dr. Thanaa Mohamed', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}] }] },
+                { name: 'Dr. Noura Shoaib', schedule: [{ day: 'Thursday', slots: [{id: 2, g: 'G19'}, {id: 3, g: 'G20'}, {id: 4, g: 'G21'}] }] }
+            ]
+        },
+        {
+            name: 'Advanced Database',
+            color: '#a855f7',
+            doctors: [
+                { name: 'Dr. Mohamed Hassan', schedule: [{ day: 'Saturday', slots: [{id: 4, g: 'G9'}, {id: 5, g: 'G10'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}] }] },
+                { name: 'Dr. Menna Mamdouh', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G23'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G24'}] }] },
+                { name: 'Dr. Ibrahim El Desouki', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G5'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}, {id: 3, g: 'G8'}] }] },
+                { name: 'Dr. Ahmed El Sidawy', schedule: [{ day: 'Monday', slots: [{id: 4, g: 'G1'}, {id: 5, g: 'G2'}] }, { day: 'Thursday', slots: [{id: 3, g: 'G3'}, {id: 4, g: 'G4'}] }] },
+                { name: 'Dr. Yasser El Gedawy', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G19'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G20'}, {id: 4, g: 'G21'}, {id: 5, g: 'G22'}] }] },
+                { name: 'Dr. Mira Tamer', schedule: [{ day: 'Tuesday', slots: [{id: 1, g: 'G16'}, {id: 2, g: 'G17'}, {id: 3, g: 'G18'}] }] },
+                { name: 'Dr. Hany Gouda', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}, {id: 3, g: 'G15'}] }] }
+            ]
+        },
+        {
+            name: 'Operation Research',
+            color: '#fbbf24',
+            doctors: [
+                { name: 'Dr. Ghada Taha', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}, {id: 3, g: 'G17'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G18'}] }] },
+                { name: 'Dr. Mahmoud Sadeq', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}] }] },
+                { name: 'Dr. Ahmed Abdel Hadi', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 5, g: 'G3'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G4'}, {id: 3, g: 'G5'}] }] },
+                { name: 'Dr. Khaled Mohamed', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G19'}, {id: 1, g: 'G21'}, {id: 4, g: 'G20'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 4, g: 'G24'}] }] },
+                { name: 'Dr. Hend Atteya', schedule: [{ day: 'Tuesday', slots: [{id: 2, g: 'G6'}, {id: 3, g: 'G7'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] }
+            ]
+        }
+    ],
+    4: [
+        // Coming Soon - Level 4 data will be added here later
+        // {
+        //     name: '⚠️ Coming Soon',
+        //     color: '#94a3b8',
+        //     doctors: [
+        //         { 
+        //             name: 'Level 4 courses will be added soon', 
+        //             schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'INFO'}] }] 
+        //         }
+        //     ]
+        // }
     ]
 };
 

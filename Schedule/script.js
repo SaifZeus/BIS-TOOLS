@@ -30,7 +30,7 @@ const updatedCoursesData = {
             name: 'Money and Banking',
             color: '#ef4444',
             doctors: [
-                { name: 'Dr. Mahmoud Eltony', schedule: [{ day: 'Saturday', slots: [{id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G20'}, {id: 2, g: 'G21'}, {id: 3, g: 'G22'}] }] },
+                { name: 'Dr. Mahmoud Eltony', schedule: [{ day: 'Saturday', slots: [{id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }, { day: 'Sunday', slots: [{id: 2, g: 'G21'}, {id: 3, g: 'G22'}, {id: 4, g: 'G20'}] }] },
                 { name: 'Dr. Mohamed Abdel Wahid', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 3, g: 'G3'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G4'}, {id: 2, g: 'G5'}, {id: 3, g: 'G6'}] }, { day: 'Monday', slots: [{id: 1, g: 'G7'}, {id: 2, g: 'G8'}, {id: 3, g: 'G9'}] }] },
                 { name: 'Dr. Gaber Abdel Gawad', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G10'}, {id: 2, g: 'G11'}, {id: 3, g: 'G12'}] }, { day: 'Monday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}, {id: 3, g: 'G15'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G16'}, {id: 2, g: 'G17'}] }] },
                 { name: 'Dr. Thoraya', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G24'}, {id: 2, g: 'G25'}, {id: 3, g: 'G26'}] }] }
@@ -40,8 +40,10 @@ const updatedCoursesData = {
             name: 'Accounting for Corporations',
             color: '#3b82f6',
             doctors: [
-                { name: 'Dr. Amr Hassan', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G10'}, {id: 2, g: 'G11'}] }] },
-                { name: 'Dr. Mohamed El Ardy', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G3'}, {id: 2, g: 'G4'}, {id: 4, g: 'G5'}] }, { day: 'Monday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}] }] },
+                { name: 'Dr. Amr Hassan', schedule: [
+                    { day: 'Sunday', slots: [{id: 1, g: 'G10'}, {id: 2, g: 'G11'}] },
+                    { day: 'Monday', slots: [{id: 1, g: 'G12'}, {id: 2, g: 'G13'}] }
+                ]},                   { name: 'Dr. Mohamed El Ardy', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G3'}, {id: 2, g: 'G4'}, {id: 4, g: 'G5'}] }, { day: 'Monday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}] }] },
                 { name: 'Dr. Ahmed Ibrahim', schedule: [{ day: 'Saturday', slots: [{id: 3, g: 'G14'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}, {id: 4, g: 'G17'}] }] },
                 { name: 'Dr. Soha Samir', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G18'}, {id: 2, g: 'G19'}, {id: 3, g: 'G20'}] }, { day: 'Monday', slots: [{id: 1, g: 'G21'}, {id: 2, g: 'G22'}, {id: 3, g: 'G23'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G24'}, {id: 2, g: 'G25'}, {id: 3, g: 'G26'}] }] },
                 { name: 'Dr. Yasmeen Abdel Aal', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}] }] },
@@ -57,7 +59,7 @@ const updatedCoursesData = {
                 { name: 'Dr. Ashraf Said', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G22'}] }, { day: 'Sunday', slots: [{id: 2, g: 'G15'}] }] },
                 { name: 'Dr. Amr Galal', schedule: [{ day: 'Saturday', slots: [{id: 2, g: 'G5'}, {id: 3, g: 'G6'}, {id: 4, g: 'G7'}] }] },
                 { name: 'Dr. Antony', schedule: [{ day: 'Tuesday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}, {id: 3, g: 'G13'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G14'}] }] },
-                { name: 'Dr. Walaa Mohamed', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G19'}, {id: 2, g: 'G20'}, {id: 3, g: 'G21'}] }] },
+                { name: 'Dr. Walaa Mohamed', schedule: [{ day: 'Tuesday', slots: [{id: 1, g: 'G19'}, {id: 2, g: 'G20'}, {id: 3, g: 'G21'}] }] },
                 { name: 'Dr. Sara Naeem', schedule: [{ day: 'Thursday', slots: [{id: 2, g: 'G15'}, {id: 3, g: 'G16'}, {id: 4, g: 'G17'}] }] },
                 { name: 'Dr. Amira Mohie', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G23'}, {id: 2, g: 'G24'}, {id: 3, g: 'G25'}] }] }
             ]
@@ -83,7 +85,7 @@ const updatedCoursesData = {
                 { name: 'Dr. Rasha El Naggar', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] },
                 { name: 'Dr. Amira Moussa', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}, {id: 3, g: 'G13'}] }] },
                 { name: 'Dr. Mohamed Ramadan', schedule: [{ day: 'Tuesday', slots: [{id: 2, g: 'G14'}, {id: 4, g: 'G15'}, {id: 5, g: 'G16'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G17'}, {id: 2, g: 'G18'}, {id: 4, g: 'G19'}] }] },
-                { name: 'Dr. Mostafa Youssef', schedule: [{ day: 'Tuesday', slots: [{id: 2, g: 'G20'}, {id: 4, g: 'G21'}, {id: 5, g: 'G22'}] }, { day: 'Thursday', slots: [{id: 3, g: 'G23'}] }] },
+                { name: 'Dr. Mostafa Youssef', schedule: [{ day: 'Tuesday', slots: [{id: 3, g: 'G20'}, {id: 4, g: 'G21'}, {id: 5, g: 'G22'}] }, { day: 'Wednesday', slots: [{id: 3, g: 'G23'}] }] },
                 { name: 'Dr. Sarah Hashem', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G25'}, {id: 2, g: 'G26'}, {id: 3, g: 'G24'}] }] }
             ]
         },

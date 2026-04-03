@@ -162,7 +162,7 @@ function loadCourses() {
     const semester = document.getElementById('semesterSelect').value;
 
     if (!level || !semester) {
-        alert('⚠️ Please select both level and semester');
+        alert('Please select both level and semester');
         return;
     }
 
@@ -190,7 +190,7 @@ function loadCourses() {
     if (coreCourses.length > 0) {
         const coreHeader = document.createElement('div');
         coreHeader.className = 'section-header core-header';
-        coreHeader.textContent = '📚 Core Courses (Required)';
+        coreHeader.textContent = 'Core Courses (Required)';
         container.appendChild(coreHeader);
 
         coreCourses.forEach((course) => {
@@ -205,7 +205,7 @@ function loadCourses() {
         
         // Check if this is a "choose one" group
         const isChooseOne = electiveCourses.some(c => c.chooseOne);
-        electiveHeader.textContent = isChooseOne ? '🌟 Elective Courses (Choose ONE Only)' : '🌟 Elective Courses (Choose as needed)';
+        electiveHeader.textContent = isChooseOne ? ' Elective Courses (Choose ONE Only)' : 'Elective Courses (Choose as needed)';
         
         container.appendChild(electiveHeader);
 

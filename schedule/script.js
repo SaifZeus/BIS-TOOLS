@@ -3,9 +3,6 @@
 // ============================================================
 
 // ── Firebase Configuration ───────────────────────────────────
-// IMPORTANT: Replace the databaseURL value with the URL shown
-// in Firebase Console → Realtime Database.
-// All other values are already correct.
 const firebaseConfig = {
     apiKey:            'AIzaSyCviBnee-DjBgN2hZQA-yEoNN9kJ6iqULc',
     authDomain:        'bis-pretest.firebaseapp.com',
@@ -276,8 +273,11 @@ function getCourseByName(name) {
 
 function getSectionList(course) {
     if (Array.isArray(course.sections) && course.sections.length > 0) return course.sections;
+    // Fallback: identify section providers by name when the sections[] array is absent.
+    // Matches: "Eng." prefix, "Sec"/"Section" keyword, Arabic "سكشن".
+    const SECTION_PATTERN = /\beng\.?\b|\bsec(tion)?\b|سكشن/i;
     return (course.doctors || [])
-        .filter(d => /sec/i.test(d.name))
+        .filter(d => SECTION_PATTERN.test(d.name))
         .map(s => ({ name: s.name, whatsappLink: s.whatsappLink || '', schedule: s.schedule }));
 }
 
@@ -712,18 +712,65 @@ function handleDrop(e, targetDay, targetSlotId) {
     renderSchedule();
 }
 
-// ── 15. Touch Drag & Drop — FIX M-5 ──────────────────────────
-// Pointer-event based touch DnD. Works on iOS, Android, and
-// any pointer-capable device. Uses the same handleDrop() logic
-// so conflict rules are identical on all platforms.
-let touchDragState = null;
+// ── 15. Touch Drag & Drop ────────────────────────────────────
+//
+// Four bugs were present in the prior implementation:
+//
+//  BUG 1 — setPointerCapture inside setTimeout.
+//    The Pointer Events spec requires capture to be requested synchronously
+//    during the pointerdown event dispatch. Calling it 350 ms later inside
+//    a setTimeout is outside that dispatch window. iOS Safari and Chrome
+//    silently ignore the call, so pointermove events never reach `el` and
+//    the ghost element appears but does not follow the finger.
+//    FIX: Capture the pointer immediately on pointerdown (before the timer
+//    fires). Store the pointerId so it is available inside the callback.
+//
+//  BUG 2 — pointermove / pointerup registered as { passive: true }.
+//    passive:true means the handler cannot call preventDefault(). On iOS
+//    Safari the browser treats the touch as a scroll and moves the page
+//    instead of the ghost. The drop target under the finger is wrong.
+//    FIX: Use { passive: false } for pointermove and pointerup. Call
+//    e.preventDefault() inside pointermove to suppress native scroll
+//    while a drag is active.
+//
+//  BUG 3 — pointerdown is { passive: true } — Android context menu.
+//    Android fires a native long-press context menu at ~300–500 ms. With
+//    passive:true we cannot preventDefault() to suppress it. The menu
+//    appears exactly when the drag ghost should appear and cancels the drag.
+//    FIX: pointerdown uses { passive: false }. preventDefault() is called
+//    inside the 350 ms callback to suppress the context menu.
+//
+//  BUG 4 — Synthesized click fires after touch pointerup ends a drag.
+//    After a touch drag ends (pointerup), browsers synthesize a 'click'
+//    event on the element under the finger. This hit the slot's click
+//    listener and opened QuickActions (or added a duplicate entry if
+//    previewData was set). Also, starting a long-press and then lifting
+//    before 350 ms fires the click listener — which is correct — but if
+//    the timer had already fired and isDragging was set, the click would
+//    double-fire.
+//    FIX: A module-level `_touchDragJustEnded` flag is set to true when a
+//    drag completes. The click listener in renderSchedule() checks this
+//    flag and bails out, then the flag is reset on the next tick via
+//    requestAnimationFrame.
+
+let touchDragState     = null;
+let _touchDragJustEnded = false; // BUG 4 suppression flag
 
 function initTouchDrag(el, day, slotId, entryId) {
     let longPressTimer = null;
     let isDragging     = false;
+    let capturedId     = null; // BUG 1: store pointerId at pointerdown time
 
+    // ── pointerdown: BUG 1 fix (capture immediately) ─────────
+    //                BUG 3 fix (non-passive so we can preventDefault)
     el.addEventListener('pointerdown', e => {
         if (e.pointerType === 'mouse') return; // desktop uses HTML5 DnD
+
+        // BUG 1 FIX: capture the pointer RIGHT NOW, synchronously,
+        // during the pointerdown dispatch — not inside the timer.
+        capturedId = e.pointerId;
+        el.setPointerCapture(capturedId);
+
         isDragging = false;
 
         longPressTimer = setTimeout(() => {
@@ -731,48 +778,98 @@ function initTouchDrag(el, day, slotId, entryId) {
             const entry = getCellEntries(key).find(i => i.entryId === entryId);
             if (!entry) return;
 
+            // BUG 3 FIX: suppress Android context menu that fires at ~350ms.
+            // Requires the pointerdown listener to be non-passive.
+            e.preventDefault();
+
             isDragging  = true;
             draggedSlot = { key, data: entry };
-            el.setPointerCapture(e.pointerId);
 
             const rect  = el.getBoundingClientRect();
             const ghost = el.cloneNode(true);
             Object.assign(ghost.style, {
-                position: 'fixed', left: `${rect.left}px`, top: `${rect.top}px`,
-                width: `${rect.width}px`, opacity: '0.8', pointerEvents: 'none',
-                zIndex: '9000', borderRadius: '8px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.3)', transition: 'none',
+                position:      'fixed',
+                left:          `${rect.left}px`,
+                top:           `${rect.top}px`,
+                width:         `${rect.width}px`,
+                opacity:       '0.85',
+                pointerEvents: 'none',
+                zIndex:        '9000',
+                borderRadius:  '8px',
+                boxShadow:     '0 8px 32px rgba(0,0,0,0.35)',
+                transform:     'scale(1.05)',
+                transition:    'transform 0.1s ease',
             });
             document.body.appendChild(ghost);
             el.style.opacity = '0.35';
             highlightValidDropTargets(entry);
 
             touchDragState = {
-                entryId, ghost, sourceEl: el,
-                offsetX: e.clientX - rect.left,
-                offsetY: e.clientY - rect.top,
+                entryId,
+                ghost,
+                sourceEl: el,
+                offsetX:  e.clientX - rect.left,
+                offsetY:  e.clientY - rect.top,
             };
 
-            // Haptic feedback where available
+            // Haptic feedback (Android + some iOS with permissions)
             if (navigator.vibrate) navigator.vibrate(40);
-        }, 350); // 350 ms long-press to start drag
-    }, { passive: true });
 
+        }, 350);
+    }, { passive: false }); // BUG 3 FIX: must be non-passive
+
+    // ── pointermove: BUG 2 fix (non-passive + preventDefault) ──
     el.addEventListener('pointermove', e => {
-        if (!isDragging || !touchDragState || touchDragState.entryId !== entryId) return;
+        if (!isDragging || !touchDragState || touchDragState.entryId !== entryId) {
+            // Drag hasn't started yet — cancel timer if finger moved too far
+            // (prevents accidental drags when user scrolls over a slot)
+            if (!isDragging && longPressTimer) {
+                const MOVE_THRESHOLD = 8; // px — tighter than native DnD
+                if (e.movementX !== undefined &&
+                    (Math.abs(e.movementX) > MOVE_THRESHOLD ||
+                     Math.abs(e.movementY) > MOVE_THRESHOLD)) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                    el.releasePointerCapture(capturedId);
+                }
+            }
+            return;
+        }
+
+        // BUG 2 FIX: suppress native scroll while dragging
+        e.preventDefault();
+
         const { ghost, offsetX, offsetY } = touchDragState;
         ghost.style.left = `${e.clientX - offsetX}px`;
         ghost.style.top  = `${e.clientY - offsetY}px`;
-    }, { passive: true });
+    }, { passive: false }); // BUG 2 FIX: must be non-passive
 
+    // ── pointerup: BUG 2 fix (non-passive) + BUG 4 fix (flag) ─
     el.addEventListener('pointerup', e => {
         clearTimeout(longPressTimer);
-        if (!isDragging || !touchDragState || touchDragState.entryId !== entryId) return;
+        longPressTimer = null;
+
+        if (!isDragging || !touchDragState || touchDragState.entryId !== entryId) {
+            el.releasePointerCapture(capturedId);
+            return;
+        }
+
+        // BUG 2 FIX: non-passive lets us prevent the synthesized click
+        e.preventDefault();
+
+        // BUG 4 FIX: set flag so the click listener in renderSchedule skips
+        // the synthesized click that the browser fires after pointerup
+        _touchDragJustEnded = true;
+        requestAnimationFrame(() => { _touchDragJustEnded = false; });
 
         const { ghost, sourceEl } = touchDragState;
-        const target = document.elementFromPoint(e.clientX, e.clientY);
-        const cell   = target?.closest('.schedule-cell');
 
+        // ghost is pointer-events:none so elementFromPoint sees through it
+        ghost.style.display = 'none';
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        ghost.style.display = '';
+
+        const cell = target?.closest('.schedule-cell');
         if (cell) {
             const targetDay    = cell.getAttribute('data-day');
             const targetSlotId = parseInt(cell.getAttribute('data-slot'), 10);
@@ -781,23 +878,27 @@ function initTouchDrag(el, day, slotId, entryId) {
 
         ghost.remove();
         sourceEl.style.opacity = '1';
+        el.releasePointerCapture(capturedId);
         clearDragHighlights();
         draggedSlot    = null;
         touchDragState = null;
         isDragging     = false;
-    }, { passive: true });
+    }, { passive: false }); // BUG 2 FIX: must be non-passive
 
+    // ── pointercancel: cleanup on interruption ──────────────────
     el.addEventListener('pointercancel', () => {
         clearTimeout(longPressTimer);
+        longPressTimer = null;
         if (touchDragState?.entryId === entryId) {
             touchDragState.ghost.remove();
             touchDragState.sourceEl.style.opacity = '1';
         }
+        el.releasePointerCapture(capturedId);
         clearDragHighlights();
         draggedSlot    = null;
         touchDragState = null;
         isDragging     = false;
-    }, { passive: true });
+    }); // cancel needs no passive option — it never has a default to prevent
 }
 
 // ── 16. Quick Actions — FIX C-1 ──────────────────────────────
@@ -896,8 +997,11 @@ function renderSchedule() {
                 div.addEventListener('dragend',   handleDragEnd);
                 // Pointer-based touch DnD (mobile/tablet)
                 initTouchDrag(div, day, slot.id, eid);
-                // Quick actions
+                // Quick actions — BUG 4 FIX: bail out if a touch drag just
+                // ended on this element. The browser synthesizes a 'click'
+                // after pointerup and _touchDragJustEnded suppresses it.
                 div.addEventListener('click', e => {
+                    if (_touchDragJustEnded) return;
                     e.stopPropagation();
                     const entry = getCellEntries(key).find(i => i.entryId === eid);
                     if (entry) openQuickActions(entry, e);

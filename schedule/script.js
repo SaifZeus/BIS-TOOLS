@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
     storageBucket: "bis-pretest.firebasestorage.app",
     messagingSenderId: "1088226044850",
     appId: "1:1088226044850:web:38b84054525089d86f92ab",
-    measurementId: "G-LHH7QC9EH3"
+    measurementId: "G-LHH7QC9EH3",
+    databaseURL: "https://bis-pretest-default-rtdb.firebaseio.com/"
   };
 
 // Initialize Firebase (only if not already initialized)

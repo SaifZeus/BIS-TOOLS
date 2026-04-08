@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-        <!-- Disable  -->
-<script disable-devtool-auto src='https://cdn.jsdelivr.net/npm/disable-devtool'></script>
-    <!-- ### -->
+        <!-- Source Protection: Deters casual copying while staying
+             non-intrusive for normal browsing. The 'interval' is set
+             to 1000ms (vs the default 200ms) so it won't interfere
+             with normal page interactions or slow the UI. -->
+<script disable-devtool-auto
+        src='https://cdn.jsdelivr.net/npm/disable-devtool'
+        interval='1000'
+        redirect-url='https://bis-portal.vercel.app'></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BIS Schedule Builder | Helwan University</title>
@@ -53,19 +58,19 @@
             <div class="selection-section">
                 <h2 class="selection-title">Select Your Academic Year</h2>
                 <div class="year-grid">
-                    <button class="year-card" onclick="selectYear(1)">
+                    <button class="year-card" onclick="selectYear(1, this)">
                         <div class="year-number">1</div>
                         <div class="year-label">First Year</div>
                     </button>
-                    <button class="year-card" onclick="selectYear(2)">
+                    <button class="year-card" onclick="selectYear(2, this)">
                         <div class="year-number">2</div>
                         <div class="year-label">Second Year</div>
                     </button>
-                    <button class="year-card" onclick="selectYear(3)">
+                    <button class="year-card" onclick="selectYear(3, this)">
                         <div class="year-number">3</div>
                         <div class="year-label">Third Year</div>
                     </button>
-                    <button class="year-card" onclick="selectYear(4)">
+                    <button class="year-card" onclick="selectYear(4, this)">
                         <div class="year-number">4</div>
                         <div class="year-label">Fourth Year</div>
                     </button>

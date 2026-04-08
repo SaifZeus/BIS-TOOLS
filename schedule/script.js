@@ -1,314 +1,248 @@
-// Dark Mode Toggle Function
-function toggleTheme() {
-    const body = document.body;
-    body.classList.toggle('dark-mode');
-    
-    // Save preference to localStorage
-    const isDarkMode = body.classList.contains('dark-mode');
-    localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+// ============================================================
+// BIS Schedule Builder — script.js
+// ============================================================
+
+// ── Firebase Configuration ───────────────────────────────────
+// IMPORTANT: Replace the databaseURL value with the URL shown
+// in Firebase Console → Realtime Database.
+// All other values are already correct.
+const firebaseConfig = {
+    apiKey:            'AIzaSyCviBnee-DjBgN2hZQA-yEoNN9kJ6iqULc',
+    authDomain:        'bis-pretest.firebaseapp.com',
+    databaseURL:       'https://bis-pretest-default-rtdb.firebaseio.com/',
+    projectId:         'bis-pretest',
+    storageBucket:     'bis-pretest.firebasestorage.app',
+    messagingSenderId: '1088226044850',
+    appId:             '1:1088226044850:web:38b84054525089d86f92ab',
+    measurementId:     'G-LHH7QC9EH3',
+};
+
+// ── XSS Helper ───────────────────────────────────────────────
+function escHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
-// Load saved theme preference on page load
-function loadTheme() {
-    const darkMode = localStorage.getItem('darkMode');
-    if (darkMode === 'enabled') {
-        document.body.classList.add('dark-mode');
-    }
-}
-
-// Initialize theme when DOM loads
-document.addEventListener('DOMContentLoaded', function() {
-    loadTheme();
-    
-    // Load schedule from Firebase if available
-    if (typeof firebase !== 'undefined' && firebase.database) {
-        loadScheduleFromFirebase();
-    }
-    
-});
-
-// Firebase Configuration (Optional - will fall back to hardcoded if not configured)
-  const firebaseConfig = {
-    apiKey: "AIzaSyCviBnee-DjBgN2hZQA-yEoNN9kJ6iqULc",
-    authDomain: "bis-pretest.firebaseapp.com",
-    projectId: "bis-pretest",
-    storageBucket: "bis-pretest.firebasestorage.app",
-    messagingSenderId: "1088226044850",
-    appId: "1:1088226044850:web:38b84054525089d86f92ab",
-    measurementId: "G-LHH7QC9EH3",
-    databaseURL: "https://bis-pretest-default-rtdb.firebaseio.com/"
-  };
-
-// Initialize Firebase (only if not already initialized)
+// ── Firebase Init ────────────────────────────────────────────
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-    try {
-        firebase.initializeApp(firebaseConfig);
-    } catch (error) {
-        console.log('Firebase not configured, using local data');
-    }
+    try { firebase.initializeApp(firebaseConfig); }
+    catch (e) { console.warn('[BIS] Firebase init failed; using local data.', e); }
 }
 
-// Load schedule from Firebase
-async function loadScheduleFromFirebase() {
-    try {
-        const database = firebase.database();
-        const snapshot = await database.ref('schedule').once('value');
-        const firebaseSchedule = snapshot.val();
-        
-        if (firebaseSchedule) {
-            // Update updatedCoursesData with Firebase data
-            Object.keys(firebaseSchedule).forEach(level => {
-                if (firebaseSchedule[level] && firebaseSchedule[level].length > 0) {
-                    updatedCoursesData[level] = (firebaseSchedule[level] || []).map(normalizeSubjectData);
-                }
-            });
-            console.log('Schedule data loaded successfully');
-        }
-    } catch (error) {
-        console.log('Using local schedule data:', error.message);
-    }
-}
-
+// ── Data Normalisation ───────────────────────────────────────
 function normalizeSlotData(slot) {
-    return {
-        ...slot,
-        teamsCode: slot?.teamsCode || ''
-    };
+    return { ...slot, teamsCode: slot?.teamsCode || '' };
 }
-
 function normalizeProviderData(provider) {
     return {
         ...provider,
         whatsappLink: provider?.whatsappLink || '',
         schedule: (provider?.schedule || []).map(dayItem => ({
             ...dayItem,
-            slots: (dayItem?.slots || []).map(normalizeSlotData)
-        }))
+            slots: (dayItem?.slots || []).map(normalizeSlotData),
+        })),
     };
 }
-
 function normalizeSubjectData(subject) {
     return {
         ...subject,
-        doctors: (subject?.doctors || []).map(normalizeProviderData),
-        sections: (subject?.sections || []).map(normalizeProviderData)
+        doctors:  (subject?.doctors  || []).map(normalizeProviderData),
+        sections: (subject?.sections || []).map(normalizeProviderData),
     };
 }
 
-// 1. Time Slots & Days Configuration
+// ── 1. Time Slots & Days ─────────────────────────────────────
 const timeSlots = [
-    { id: 1, display: '8:00 - 10:00' },
+    { id: 1, display: '8:00 - 10:00'  },
     { id: 2, display: '10:00 - 12:00' },
-    { id: 3, display: '12:00 - 2:00' },
-    { id: 4, display: '2:00 - 4:00' },
-    { id: 5, display: '4:00 - 6:00' },
-    { id: 6, display: '6:00 - 8:00' }
+    { id: 3, display: '12:00 - 2:00'  },
+    { id: 4, display: '2:00 - 4:00'   },
+    { id: 5, display: '4:00 - 6:00'   },
+    { id: 6, display: '6:00 - 8:00'   },
 ];
-
 const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
-// 2. Data - UPDATED: No 'code' property, only 'name'
+// ── 2. Course Data ───────────────────────────────────────────
 const updatedCoursesData = {
     1: [
-        // Coming Soon - Level 1 data will be added here later
         {
-            name: '⚠️ Coming Soon',
-            color: '#94a3b8',
-            doctors: [
-                { 
-                    name: 'Level 1 courses will be added soon', 
-                    schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'INFO'}] }] 
-                }
-            ]
-        }
+            name: '⚠️ Coming Soon', color: '#94a3b8',
+            doctors: [{ name: 'Level 1 courses will be added soon', schedule: [{ day: 'Saturday', slots: [{ id: 1, g: 'INFO' }] }] }],
+        },
     ],
     2: [
         {
-            name: 'Money and Banking',
-            color: '#ef4444',
+            name: 'Money and Banking', color: '#ef4444',
             doctors: [
-                { name: 'Dr. Mahmoud Eltony', schedule: [{ day: 'Saturday', slots: [{id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G20'}, {id: 2, g: 'G21'}, {id: 3, g: 'G22'}] }] },
-                { name: 'Dr. Mohamed Abdel Wahid', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 3, g: 'G3'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G4'}, {id: 2, g: 'G5'}, {id: 3, g: 'G6'}] }, { day: 'Monday', slots: [{id: 1, g: 'G7'}, {id: 2, g: 'G8'}, {id: 3, g: 'G9'}] }] },
-                { name: 'Dr. Gaber Abdel Gawad', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G10'}, {id: 2, g: 'G11'}, {id: 3, g: 'G12'}] }, { day: 'Monday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}, {id: 3, g: 'G15'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G16'}, {id: 2, g: 'G17'}] }] },
-                { name: 'Dr. Thoraya', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G24'}, {id: 2, g: 'G25'}, {id: 3, g: 'G26'}] }] }
-            ]
+                { name: 'Dr. Mahmoud Eltony',      schedule: [{ day: 'Saturday', slots: [{ id: 2, g: 'G18' }, { id: 3, g: 'G19' }] }, { day: 'Sunday',    slots: [{ id: 1, g: 'G20' }, { id: 2, g: 'G21' }, { id: 3, g: 'G22' }] }] },
+                { name: 'Dr. Mohamed Abdel Wahid', schedule: [{ day: 'Saturday', slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }, { id: 3, g: 'G3'  }] }, { day: 'Sunday',    slots: [{ id: 1, g: 'G4'  }, { id: 2, g: 'G5'  }, { id: 3, g: 'G6'  }] }, { day: 'Monday',    slots: [{ id: 1, g: 'G7'  }, { id: 2, g: 'G8'  }, { id: 3, g: 'G9'  }] }] },
+                { name: 'Dr. Gaber Abdel Gawad',   schedule: [{ day: 'Sunday',   slots: [{ id: 1, g: 'G10' }, { id: 2, g: 'G11' }, { id: 3, g: 'G12' }] }, { day: 'Monday',    slots: [{ id: 1, g: 'G13' }, { id: 2, g: 'G14' }, { id: 3, g: 'G15' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G16' }, { id: 2, g: 'G17' }] }] },
+                { name: 'Dr. Thoraya',              schedule: [{ day: 'Thursday', slots: [{ id: 1, g: 'G24' }, { id: 2, g: 'G25' }, { id: 3, g: 'G26' }] }] },
+            ],
         },
         {
-            name: 'Accounting for Corporations',
-            color: '#3b82f6',
+            name: 'Accounting for Corporations', color: '#3b82f6',
             doctors: [
-                 { name: 'Dr. Amr Hassan', schedule: [
-                    { day: 'Sunday', slots: [{id: 1, g: 'G10'}, {id: 2, g: 'G11'}] },
-                    { day: 'Monday', slots: [{id: 1, g: 'G12'}, {id: 2, g: 'G13'}] }]},
-                { name: 'Dr. Mohamed El Ardy', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G3'}, {id: 2, g: 'G4'}, {id: 4, g: 'G5'}] }, { day: 'Monday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}] }] },
-                { name: 'Dr. Ahmed Ibrahim', schedule: [{ day: 'Saturday', slots: [{id: 3, g: 'G14'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}, {id: 4, g: 'G17'}] }] },
-                { name: 'Dr. Soha Samir', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G18'}, {id: 2, g: 'G19'}, {id: 3, g: 'G20'}] }, { day: 'Monday', slots: [{id: 1, g: 'G21'}, {id: 2, g: 'G22'}, {id: 3, g: 'G23'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G24'}, {id: 2, g: 'G25'}, {id: 3, g: 'G26'}] }] },
-                { name: 'Dr. Yasmeen Abdel Aal', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}] }] },
-                { name: 'Dr. Hamdy Habl', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 3, g: 'G24'}] }] }
-            ]
+                { name: 'Dr. Amr Hassan',        schedule: [{ day: 'Sunday',   slots: [{ id: 1, g: 'G10' }, { id: 2, g: 'G11' }] }, { day: 'Monday',   slots: [{ id: 1, g: 'G12' }, { id: 2, g: 'G13' }] }] },
+                { name: 'Dr. Mohamed El Ardy',   schedule: [{ day: 'Saturday', slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }] }, { day: 'Sunday',   slots: [{ id: 1, g: 'G3'  }, { id: 2, g: 'G4'  }, { id: 4, g: 'G5'  }] }, { day: 'Monday',   slots: [{ id: 1, g: 'G6'  }, { id: 2, g: 'G7'  }] }] },
+                { name: 'Dr. Ahmed Ibrahim',     schedule: [{ day: 'Saturday', slots: [{ id: 3, g: 'G14' }] }, { day: 'Sunday',   slots: [{ id: 1, g: 'G15' }, { id: 2, g: 'G16' }, { id: 4, g: 'G17' }] }] },
+                { name: 'Dr. Soha Samir',        schedule: [{ day: 'Sunday',   slots: [{ id: 1, g: 'G18' }, { id: 2, g: 'G19' }, { id: 3, g: 'G20' }] }, { day: 'Monday',   slots: [{ id: 1, g: 'G21' }, { id: 2, g: 'G22' }, { id: 3, g: 'G23' }] }, { day: 'Thursday', slots: [{ id: 1, g: 'G24' }, { id: 2, g: 'G25' }, { id: 3, g: 'G26' }] }] },
+                { name: 'Dr. Yasmeen Abdel Aal', schedule: [{ day: 'Monday',   slots: [{ id: 1, g: 'G8'  }, { id: 2, g: 'G9'  }] }] },
+                { name: 'Dr. Hamdy Habl',        schedule: [{ day: 'Thursday', slots: [{ id: 1, g: 'G22' }, { id: 2, g: 'G23' }, { id: 3, g: 'G24' }] }] },
+            ],
         },
         {
-            name: 'System Analysis 2',
-            color: '#8b5cf6',
-            sections: [],
+            name: 'System Analysis 2', color: '#8b5cf6', sections: [],
             doctors: [
-                { name: 'Dr. Menna Ibrahim', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] },
-                { name: 'Dr. Wael Karam', schedule: [{ day: 'Saturday', slots: [{id: 4, g: 'G1'}] }, { day: 'Thursday', slots: [{id: 2, g: 'G2'}, {id: 3, g: 'G3'}, {id: 4, g: 'G4'}] }] },
-                { name: 'Dr. Ashraf Said', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G22'}] }, { day: 'Sunday', slots: [{id: 2, g: 'G15'}] }] },
-                { name: 'Dr. Amr Galal', schedule: [{ day: 'Saturday', slots: [{id: 2, g: 'G5'}, {id: 3, g: 'G6'}, {id: 4, g: 'G7'}] }] },
-                { name: 'Dr. Antony', schedule: [{ day: 'Tuesday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}, {id: 3, g: 'G13'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G14'}] }] },
-                { name: 'Dr. Walaa Mohamed', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G19'}, {id: 2, g: 'G20'}, {id: 3, g: 'G21'}] }] },
-                { name: 'Dr. Sara Naeem', schedule: [{ day: 'Thursday', slots: [{id: 2, g: 'G15'}, {id: 3, g: 'G16'}, {id: 4, g: 'G17'}] }] },
-                { name: 'Dr. Amira Mohie', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G23'}, {id: 2, g: 'G24'}, {id: 3, g: 'G25'}] }] }
-            ]
+                { name: 'Dr. Menna Ibrahim', schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G8'  }, { id: 2, g: 'G9'  }, { id: 3, g: 'G10' }] }] },
+                { name: 'Dr. Wael Karam',    schedule: [{ day: 'Saturday',  slots: [{ id: 4, g: 'G1'  }] }, { day: 'Thursday',  slots: [{ id: 2, g: 'G2'  }, { id: 3, g: 'G3'  }, { id: 4, g: 'G4'  }] }] },
+                { name: 'Dr. Ashraf Said',   schedule: [{ day: 'Saturday',  slots: [{ id: 1, g: 'G22' }] }, { day: 'Sunday',    slots: [{ id: 2, g: 'G15' }] }] },
+                { name: 'Dr. Amr Galal',     schedule: [{ day: 'Saturday',  slots: [{ id: 2, g: 'G5'  }, { id: 3, g: 'G6'  }, { id: 4, g: 'G7'  }] }] },
+                { name: 'Dr. Antony',        schedule: [{ day: 'Tuesday',   slots: [{ id: 1, g: 'G11' }, { id: 2, g: 'G12' }, { id: 3, g: 'G13' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G14' }] }] },
+                { name: 'Dr. Walaa Mohamed', schedule: [{ day: 'Wednesday', slots: [{ id: 1, g: 'G19' }, { id: 2, g: 'G20' }, { id: 3, g: 'G21' }] }] },
+                { name: 'Dr. Sara Naeem',    schedule: [{ day: 'Thursday',  slots: [{ id: 2, g: 'G15' }, { id: 3, g: 'G16' }, { id: 4, g: 'G17' }] }] },
+                { name: 'Dr. Amira Mohie',   schedule: [{ day: 'Wednesday', slots: [{ id: 1, g: 'G23' }, { id: 2, g: 'G24' }, { id: 3, g: 'G25' }] }] },
+            ],
         },
         {
-            name: 'Programming 2',
-            color: '#f59e0b',
-            sections: [],
+            name: 'Programming 2', color: '#f59e0b', sections: [],
             doctors: [
-                { name: 'Dr. Mahmoud Bahlol', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G25'}, {id: 2, g: 'G26'}] }] },
-                { name: 'Dr. Amr Mansour', schedule: [{ day: 'Saturday', slots: [{id: 4, g: 'G21'}, {id: 5, g: 'G22'}] }, { day: 'Tuesday', slots: [{id: 2, g: 'G23'}, {id: 3, g: 'G24'}] }] },
-                { name: 'Dr. Wael Haider', schedule: [{ day: 'Tuesday', slots: [{id: 3, g: 'G17'}] }, { day: 'Thursday', slots: [{id: 2, g: 'G18'}, {id: 3, g: 'G19'}, {id: 4, g: 'G20'}] }] },
-                { name: 'Dr. Mahmoud Halawa', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G9'}, {id: 2, g: 'G10'}, {id: 3, g: 'G11'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G12'}] }] },
-                { name: 'Dr. Mohamed Atteya', schedule: [{ day: 'Wednesday', slots: [{id: 4, g: 'G5'}, {id: 5, g: 'G6'}] }, { day: 'Thursday', slots: [{id: 4, g: 'G7'}, {id: 5, g: 'G8'}] }] },
-                { name: 'Dr. Amr Ibrahim', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G15'}, {id: 3, g: 'G16'}] }] },
-                { name: 'Dr. Heba Mohsen', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 3, g: 'G3'}] }] }
-            ]
+                { name: 'Dr. Mahmoud Bahlol', schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G25' }, { id: 2, g: 'G26' }] }] },
+                { name: 'Dr. Amr Mansour',    schedule: [{ day: 'Saturday',  slots: [{ id: 4, g: 'G21' }, { id: 5, g: 'G22' }] }, { day: 'Tuesday',   slots: [{ id: 2, g: 'G23' }, { id: 3, g: 'G24' }] }] },
+                { name: 'Dr. Wael Haider',    schedule: [{ day: 'Tuesday',   slots: [{ id: 3, g: 'G17' }] }, { day: 'Thursday',  slots: [{ id: 2, g: 'G18' }, { id: 3, g: 'G19' }, { id: 4, g: 'G20' }] }] },
+                { name: 'Dr. Mahmoud Halawa', schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G9'  }, { id: 2, g: 'G10' }, { id: 3, g: 'G11' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G12' }] }] },
+                { name: 'Dr. Mohamed Atteya', schedule: [{ day: 'Wednesday', slots: [{ id: 4, g: 'G5'  }, { id: 5, g: 'G6'  }] }, { day: 'Thursday',  slots: [{ id: 4, g: 'G7'  }, { id: 5, g: 'G8'  }] }] },
+                { name: 'Dr. Amr Ibrahim',    schedule: [{ day: 'Thursday',  slots: [{ id: 1, g: 'G13' }, { id: 2, g: 'G15' }, { id: 3, g: 'G16' }] }] },
+                { name: 'Dr. Heba Mohsen',    schedule: [{ day: 'Thursday',  slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }, { id: 3, g: 'G3'  }] }] },
+            ],
         },
         {
-            name: 'Marketing',
-            color: '#ec4899',
+            name: 'Marketing', color: '#ec4899',
             doctors: [
-                { name: 'Dr. Wafaa Abdel Samie', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 3, g: 'G3'}] }, { day: 'Tuesday', slots: [{id: 1, g: 'G4'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G5'}, {id: 2, g: 'G6'}, {id: 3, g: 'G7'}] }] },
-                { name: 'Dr. Rasha El Naggar', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] },
-                { name: 'Dr. Amira Moussa', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}, {id: 3, g: 'G13'}] }] },
-                { name: 'Dr. Mohamed Ramadan', schedule: [{ day: 'Tuesday', slots: [{id: 2, g: 'G14'}, {id: 4, g: 'G15'}, {id: 5, g: 'G16'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G17'}, {id: 2, g: 'G18'}, {id: 4, g: 'G19'}] }] },
-                { name: 'Dr. Mostafa Youssef', schedule: [{ day: 'Tuesday', slots: [{id: 2, g: 'G20'}, {id: 4, g: 'G21'}, {id: 5, g: 'G22'}] }, { day: 'Thursday', slots: [{id: 3, g: 'G23'}] }] },
-                { name: 'Dr. Sarah Hashem', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G25'}, {id: 2, g: 'G26'}, {id: 3, g: 'G24'}] }] }
-            ]
+                { name: 'Dr. Wafaa Abdel Samie', schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }, { id: 3, g: 'G3'  }] }, { day: 'Tuesday',   slots: [{ id: 1, g: 'G4'  }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G5'  }, { id: 2, g: 'G6'  }, { id: 3, g: 'G7'  }] }] },
+                { name: 'Dr. Rasha El Naggar',   schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G8'  }, { id: 2, g: 'G9'  }, { id: 3, g: 'G10' }] }] },
+                { name: 'Dr. Amira Moussa',      schedule: [{ day: 'Wednesday', slots: [{ id: 1, g: 'G11' }, { id: 2, g: 'G12' }, { id: 3, g: 'G13' }] }] },
+                { name: 'Dr. Mohamed Ramadan',   schedule: [{ day: 'Tuesday',   slots: [{ id: 2, g: 'G14' }, { id: 4, g: 'G15' }, { id: 5, g: 'G16' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G17' }, { id: 2, g: 'G18' }, { id: 4, g: 'G19' }] }] },
+                { name: 'Dr. Mostafa Youssef',   schedule: [{ day: 'Tuesday',   slots: [{ id: 2, g: 'G20' }, { id: 4, g: 'G21' }, { id: 5, g: 'G22' }] }, { day: 'Thursday',  slots: [{ id: 3, g: 'G23' }] }] },
+                { name: 'Dr. Sarah Hashem',      schedule: [{ day: 'Thursday',  slots: [{ id: 1, g: 'G25' }, { id: 2, g: 'G26' }, { id: 3, g: 'G24' }] }] },
+            ],
         },
         {
-            name: 'Creative Thinking',
-            color: '#14b8a6',
+            name: 'Creative Thinking', color: '#14b8a6',
             doctors: [
-                { name: 'Dr. Mohamed El Tayar', schedule: [{ day: 'Thursday', slots: [{id: 2, g: 'G17'}, {id: 3, g: 'G18'}, {id: 4, g: 'G19'}] }] },
-                { name: 'Dr. Mai Qenawi', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G14'}, {id: 2, g: 'G15'}, {id: 3, g: 'G16'}] }] },
-                { name: 'Dr. Hanan Morsi', schedule: [{ day: 'Saturday', slots: [{id: 4, g: 'G10'}, {id: 5, g: 'G11'}] }] },
-                { name: 'Dr. Abeer El Ghandour', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 3, g: 'G3'}] }] },
-                { name: 'Dr. Mohamed Obeid', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G24'}, {id: 3, g: 'G25'}, {id: 4, g: 'G26'}] }] },
-                { name: 'Dr. Marwa El Badry', schedule: [{ day: 'Monday', slots: [{id: 4, g: 'G4'}, {id: 5, g: 'G5'}] }] },
-                { name: 'Dr. Mona Zaghloul', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G20'}, {id: 2, g: 'G21'}] }] },
-                { name: 'Dr. Nahla El Shourbagy', schedule: [{ day: 'Thursday', slots: [{id: 3, g: 'G22'}, {id: 4, g: 'G23'}] }] }
-            ]
-        }
+                { name: 'Dr. Mohamed El Tayar',   schedule: [{ day: 'Thursday',  slots: [{ id: 2, g: 'G17' }, { id: 3, g: 'G18' }, { id: 4, g: 'G19' }] }] },
+                { name: 'Dr. Mai Qenawi',         schedule: [{ day: 'Wednesday', slots: [{ id: 1, g: 'G14' }, { id: 2, g: 'G15' }, { id: 3, g: 'G16' }] }] },
+                { name: 'Dr. Hanan Morsi',        schedule: [{ day: 'Saturday',  slots: [{ id: 4, g: 'G10' }, { id: 5, g: 'G11' }] }] },
+                { name: 'Dr. Abeer El Ghandour',  schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }, { id: 3, g: 'G3'  }] }] },
+                { name: 'Dr. Mohamed Obeid',      schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G24' }, { id: 3, g: 'G25' }, { id: 4, g: 'G26' }] }] },
+                { name: 'Dr. Marwa El Badry',     schedule: [{ day: 'Monday',    slots: [{ id: 4, g: 'G4'  }, { id: 5, g: 'G5'  }] }] },
+                { name: 'Dr. Mona Zaghloul',      schedule: [{ day: 'Thursday',  slots: [{ id: 1, g: 'G20' }, { id: 2, g: 'G21' }] }] },
+                { name: 'Dr. Nahla El Shourbagy', schedule: [{ day: 'Thursday',  slots: [{ id: 3, g: 'G22' }, { id: 4, g: 'G23' }] }] },
+            ],
+        },
     ],
     3: [
         {
-            name: 'Economics of Information',
-            color: '#6366f1',
+            name: 'Economics of Information', color: '#6366f1',
             doctors: [
-                { name: 'Dr. Somaya Abdel Mawla', schedule: [{ day: 'Saturday', slots: [{id: 4, g: 'G4'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G5'}, {id: 2, g: 'G6'}, {id: 3, g: 'G7'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] },
-                { name: 'Dr. Shaimaa Wehbe', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G17'}, {id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }, { day: 'Monday', slots: [{id: 1, g: 'G20'}, {id: 2, g: 'G21'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 3, g: 'G24'}] }] },
-                { name: 'Dr. Rasha El Kordi', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}, {id: 3, g: 'G13'}] }, { day: 'Monday', slots: [{id: 1, g: 'G14'}, {id: 2, g: 'G15'}, {id: 3, g: 'G16'}] }] },
-                { name: 'Dr. Omar Salman', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 3, g: 'G3'}] }] }
-            ]
+                { name: 'Dr. Somaya Abdel Mawla', schedule: [{ day: 'Saturday',  slots: [{ id: 4, g: 'G4'  }] }, { day: 'Sunday',    slots: [{ id: 1, g: 'G5'  }, { id: 2, g: 'G6'  }, { id: 3, g: 'G7'  }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G8'  }, { id: 2, g: 'G9'  }, { id: 3, g: 'G10' }] }] },
+                { name: 'Dr. Shaimaa Wehbe',      schedule: [{ day: 'Saturday',  slots: [{ id: 1, g: 'G17' }, { id: 2, g: 'G18' }, { id: 3, g: 'G19' }] }, { day: 'Monday',    slots: [{ id: 1, g: 'G20' }, { id: 2, g: 'G21' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G22' }, { id: 2, g: 'G23' }, { id: 3, g: 'G24' }] }] },
+                { name: 'Dr. Rasha El Kordi',     schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G11' }, { id: 2, g: 'G12' }, { id: 3, g: 'G13' }] }, { day: 'Monday',    slots: [{ id: 1, g: 'G14' }, { id: 2, g: 'G15' }, { id: 3, g: 'G16' }] }] },
+                { name: 'Dr. Omar Salman',        schedule: [{ day: 'Wednesday', slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }, { id: 3, g: 'G3'  }] }] },
+            ],
         },
         {
-            name: 'Auditing',
-            color: '#06b6d4',
+            name: 'Auditing', color: '#06b6d4',
             doctors: [
-                { name: 'Dr. Eman Saad El Din', schedule: [{ day: 'Saturday', slots: [{id: 5, g: 'G18'}] }, { day: 'Monday', slots: [{id: 1, g: 'G19'}, {id: 2, g: 'G20'}, {id: 3, g: 'G21'}] }] },
-                { name: 'Dr. Ashraf Mansour', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G9'}, {id: 2, g: 'G10'}, {id: 3, g: 'G11'}] }, { day: 'Sunday', slots: [{id: 1, g: 'G12'}, {id: 2, g: 'G13'}, {id: 3, g: 'G14'}] }, { day: 'Monday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}, {id: 3, g: 'G17'}] }] },
-                { name: 'Dr. Hanan Jaber', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G3'}, {id: 2, g: 'G4'}, {id: 3, g: 'G5'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}, {id: 3, g: 'G8'}] }] },
-                { name: 'Dr. Hamdy Habl', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 3, g: 'G24'}] }] }
-            ]
+                { name: 'Dr. Eman Saad El Din', schedule: [{ day: 'Saturday',  slots: [{ id: 5, g: 'G18' }] }, { day: 'Monday',    slots: [{ id: 1, g: 'G19' }, { id: 2, g: 'G20' }, { id: 3, g: 'G21' }] }] },
+                { name: 'Dr. Ashraf Mansour',   schedule: [{ day: 'Saturday',  slots: [{ id: 1, g: 'G9'  }, { id: 2, g: 'G10' }, { id: 3, g: 'G11' }] }, { day: 'Sunday',    slots: [{ id: 1, g: 'G12' }, { id: 2, g: 'G13' }, { id: 3, g: 'G14' }] }, { day: 'Monday',    slots: [{ id: 1, g: 'G15' }, { id: 2, g: 'G16' }, { id: 3, g: 'G17' }] }] },
+                { name: 'Dr. Hanan Jaber',      schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G3'  }, { id: 2, g: 'G4'  }, { id: 3, g: 'G5'  }] }, { day: 'Thursday',  slots: [{ id: 1, g: 'G6'  }, { id: 2, g: 'G7'  }, { id: 3, g: 'G8'  }] }] },
+                { name: 'Dr. Hamdy Habl',       schedule: [{ day: 'Thursday',  slots: [{ id: 1, g: 'G22' }, { id: 2, g: 'G23' }, { id: 3, g: 'G24' }] }] },
+            ],
         },
         {
-            name: 'Management Information Systems',
-            color: '#84cc16',
+            name: 'Management Information Systems', color: '#84cc16',
             doctors: [
-                { name: 'Dr. Ahmed Mounir', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}, {id: 3, g: 'G13'}] }, { day: 'Monday', slots: [{id: 1, g: 'G10'}] }] },
-                { name: 'Dr. Bishoy', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G17'}, {id: 2, g: 'G18'}, {id: 3, g: 'G19'}] }] },
-                { name: 'Dr. Christina Albert', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G4'}, {id: 2, g: 'G5'}, {id: 3, g: 'G6'}] }] },
-                { name: 'Dr. Shirin Tayea', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G7'}, {id: 2, g: 'G8'}, {id: 3, g: 'G9'}] }] },
-                { name: 'Dr. Yehia Helmy', schedule: [{ day: 'Monday', slots: [{id: 2, g: 'G1'}, {id: 3, g: 'G2'}, {id: 4, g: 'G3'}] }] },
-                { name: 'Dr. Dalia Magdy', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G14'}, {id: 2, g: 'G15'}, {id: 3, g: 'G16'}] }] },
-                { name: 'Dr. Dina Helal', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G20'}, {id: 2, g: 'G21'}, {id: 3, g: 'G22'}] }] }
-            ]
+                { name: 'Dr. Ahmed Mounir',     schedule: [{ day: 'Saturday',  slots: [{ id: 1, g: 'G11' }, { id: 2, g: 'G12' }, { id: 3, g: 'G13' }] }, { day: 'Monday',    slots: [{ id: 1, g: 'G10' }] }] },
+                { name: 'Dr. Bishoy',           schedule: [{ day: 'Saturday',  slots: [{ id: 1, g: 'G17' }, { id: 2, g: 'G18' }, { id: 3, g: 'G19' }] }] },
+                { name: 'Dr. Christina Albert', schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G4'  }, { id: 2, g: 'G5'  }, { id: 3, g: 'G6'  }] }] },
+                { name: 'Dr. Shirin Tayea',     schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G7'  }, { id: 2, g: 'G8'  }, { id: 3, g: 'G9'  }] }] },
+                { name: 'Dr. Yehia Helmy',      schedule: [{ day: 'Monday',    slots: [{ id: 2, g: 'G1'  }, { id: 3, g: 'G2'  }, { id: 4, g: 'G3'  }] }] },
+                { name: 'Dr. Dalia Magdy',      schedule: [{ day: 'Wednesday', slots: [{ id: 1, g: 'G14' }, { id: 2, g: 'G15' }, { id: 3, g: 'G16' }] }] },
+                { name: 'Dr. Dina Helal',       schedule: [{ day: 'Thursday',  slots: [{ id: 1, g: 'G20' }, { id: 2, g: 'G21' }, { id: 3, g: 'G22' }] }] },
+            ],
         },
         {
-            name: 'Internet Application',
-            color: '#f43f5e',
+            name: 'Internet Application', color: '#f43f5e',
             doctors: [
-                { name: 'Dr. Amani Ahmed', schedule: [{ day: 'Saturday', slots: [{id: 3, g: 'G7'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] },
-                { name: 'Dr. Iman Hanafi', schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 3, g: 'G24'}] }] },
-                { name: 'Dr. Mortada Salah El Din', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 4, g: 'G3'}] }] },
-                { name: 'Dr. Ibrahim Zaghloul', schedule: [{ day: 'Monday', slots: [{id: 2, g: 'G4'}, {id: 3, g: 'G5'}, {id: 4, g: 'G6'}] }] },
-                { name: 'Dr. Nanis Nabil', schedule: [{ day: 'Tuesday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G17'}, {id: 2, g: 'G18'}] }] },
-                { name: 'Dr. Thanaa Mohamed', schedule: [{ day: 'Wednesday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}] }] },
-                { name: 'Dr. Noura Shoaib', schedule: [{ day: 'Thursday', slots: [{id: 2, g: 'G19'}, {id: 3, g: 'G20'}, {id: 4, g: 'G21'}] }] }
-            ]
+                { name: 'Dr. Amani Ahmed',          schedule: [{ day: 'Saturday',  slots: [{ id: 3, g: 'G7'  }] }, { day: 'Thursday',  slots: [{ id: 1, g: 'G8'  }, { id: 2, g: 'G9'  }, { id: 3, g: 'G10' }] }] },
+                { name: 'Dr. Iman Hanafi',           schedule: [{ day: 'Saturday',  slots: [{ id: 1, g: 'G22' }, { id: 2, g: 'G23' }, { id: 3, g: 'G24' }] }] },
+                { name: 'Dr. Mortada Salah El Din',  schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }, { id: 4, g: 'G3'  }] }] },
+                { name: 'Dr. Ibrahim Zaghloul',      schedule: [{ day: 'Monday',    slots: [{ id: 2, g: 'G4'  }, { id: 3, g: 'G5'  }, { id: 4, g: 'G6'  }] }] },
+                { name: 'Dr. Nanis Nabil',           schedule: [{ day: 'Tuesday',   slots: [{ id: 1, g: 'G15' }, { id: 2, g: 'G16' }] }, { day: 'Thursday',  slots: [{ id: 1, g: 'G17' }, { id: 2, g: 'G18' }] }] },
+                { name: 'Dr. Thanaa Mohamed',        schedule: [{ day: 'Wednesday', slots: [{ id: 1, g: 'G11' }, { id: 2, g: 'G12' }] }, { day: 'Thursday',  slots: [{ id: 1, g: 'G13' }, { id: 2, g: 'G14' }] }] },
+                { name: 'Dr. Noura Shoaib',          schedule: [{ day: 'Thursday',  slots: [{ id: 2, g: 'G19' }, { id: 3, g: 'G20' }, { id: 4, g: 'G21' }] }] },
+            ],
         },
         {
-            name: 'Advanced Database',
-            color: '#a855f7',
+            name: 'Advanced Database', color: '#a855f7',
             doctors: [
-                { name: 'Dr. Mohamed Hassan', schedule: [{ day: 'Saturday', slots: [{id: 4, g: 'G9'}, {id: 5, g: 'G10'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}] }] },
-                { name: 'Dr. Menna Mamdouh', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G23'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G24'}] }] },
-                { name: 'Dr. Ibrahim El Desouki', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G5'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G6'}, {id: 2, g: 'G7'}, {id: 3, g: 'G8'}] }] },
-                { name: 'Dr. Ahmed El Sidawy', schedule: [{ day: 'Monday', slots: [{id: 4, g: 'G1'}, {id: 5, g: 'G2'}] }, { day: 'Thursday', slots: [{id: 3, g: 'G3'}, {id: 4, g: 'G4'}] }] },
-                { name: 'Dr. Yasser El Gedawy', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G19'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G20'}, {id: 4, g: 'G21'}, {id: 5, g: 'G22'}] }] },
-                { name: 'Dr. Mira Tamer', schedule: [{ day: 'Tuesday', slots: [{id: 1, g: 'G16'}, {id: 2, g: 'G17'}, {id: 3, g: 'G18'}] }] },
-                { name: 'Dr. Hany Gouda', schedule: [{ day: 'Thursday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}, {id: 3, g: 'G15'}] }] }
-            ]
+                { name: 'Dr. Mohamed Hassan',     schedule: [{ day: 'Saturday',  slots: [{ id: 4, g: 'G9'  }, { id: 5, g: 'G10' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G11' }, { id: 2, g: 'G12' }] }] },
+                { name: 'Dr. Menna Mamdouh',      schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G23' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G24' }] }] },
+                { name: 'Dr. Ibrahim El Desouki', schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G5'  }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G6'  }, { id: 2, g: 'G7'  }, { id: 3, g: 'G8'  }] }] },
+                { name: 'Dr. Ahmed El Sidawy',    schedule: [{ day: 'Monday',    slots: [{ id: 4, g: 'G1'  }, { id: 5, g: 'G2'  }] }, { day: 'Thursday',  slots: [{ id: 3, g: 'G3'  }, { id: 4, g: 'G4'  }] }] },
+                { name: 'Dr. Yasser El Gedawy',   schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G19' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G20' }, { id: 4, g: 'G21' }, { id: 5, g: 'G22' }] }] },
+                { name: 'Dr. Mira Tamer',         schedule: [{ day: 'Tuesday',   slots: [{ id: 1, g: 'G16' }, { id: 2, g: 'G17' }, { id: 3, g: 'G18' }] }] },
+                { name: 'Dr. Hany Gouda',         schedule: [{ day: 'Thursday',  slots: [{ id: 1, g: 'G13' }, { id: 2, g: 'G14' }, { id: 3, g: 'G15' }] }] },
+            ],
         },
         {
-            name: 'Operation Research',
-            color: '#fbbf24',
+            name: 'Operation Research', color: '#fbbf24',
             doctors: [
-                { name: 'Dr. Ghada Taha', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G15'}, {id: 2, g: 'G16'}, {id: 3, g: 'G17'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G18'}] }] },
-                { name: 'Dr. Mahmoud Sadeq', schedule: [{ day: 'Sunday', slots: [{id: 1, g: 'G11'}, {id: 2, g: 'G12'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G13'}, {id: 2, g: 'G14'}] }] },
-                { name: 'Dr. Ahmed Abdel Hadi', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G1'}, {id: 2, g: 'G2'}, {id: 5, g: 'G3'}] }, { day: 'Wednesday', slots: [{id: 1, g: 'G4'}, {id: 3, g: 'G5'}] }] },
-                { name: 'Dr. Khaled Mohamed', schedule: [{ day: 'Monday', slots: [{id: 1, g: 'G19'}, {id: 1, g: 'G21'}, {id: 4, g: 'G20'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G22'}, {id: 2, g: 'G23'}, {id: 4, g: 'G24'}] }] },
-                { name: 'Dr. Hend Atteya', schedule: [{ day: 'Tuesday', slots: [{id: 2, g: 'G6'}, {id: 3, g: 'G7'}] }, { day: 'Thursday', slots: [{id: 1, g: 'G8'}, {id: 2, g: 'G9'}, {id: 3, g: 'G10'}] }] }
-            ]
-        }
+                { name: 'Dr. Ghada Taha',       schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G15' }, { id: 2, g: 'G16' }, { id: 3, g: 'G17' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G18' }] }] },
+                { name: 'Dr. Mahmoud Sadeq',    schedule: [{ day: 'Sunday',    slots: [{ id: 1, g: 'G11' }, { id: 2, g: 'G12' }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G13' }, { id: 2, g: 'G14' }] }] },
+                { name: 'Dr. Ahmed Abdel Hadi', schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G1'  }, { id: 2, g: 'G2'  }, { id: 5, g: 'G3'  }] }, { day: 'Wednesday', slots: [{ id: 1, g: 'G4'  }, { id: 3, g: 'G5'  }] }] },
+                // FIX C-3: Was [{id:1,g:'G19'},{id:1,g:'G21'},{id:4,g:'G20'}] — duplicate id:1 corrected.
+                // Verify the exact slot IDs against the official timetable before publishing.
+                { name: 'Dr. Khaled Mohamed',   schedule: [{ day: 'Monday',    slots: [{ id: 1, g: 'G19' }, { id: 2, g: 'G21' }, { id: 3, g: 'G20' }] }, { day: 'Thursday',  slots: [{ id: 1, g: 'G22' }, { id: 2, g: 'G23' }, { id: 4, g: 'G24' }] }] },
+                { name: 'Dr. Hend Atteya',      schedule: [{ day: 'Tuesday',   slots: [{ id: 2, g: 'G6'  }, { id: 3, g: 'G7'  }] }, { day: 'Thursday',  slots: [{ id: 1, g: 'G8'  }, { id: 2, g: 'G9'  }, { id: 3, g: 'G10' }] }] },
+            ],
+        },
     ],
     4: [
-        // Coming Soon - Level 4 data will be added here later
         {
-            name: '⚠️ Coming Soon',
-            color: '#94a3b8',
-            doctors: [
-                { 
-                    name: 'Level 4 courses will be added soon', 
-                    schedule: [{ day: 'Saturday', slots: [{id: 1, g: 'INFO'}] }] 
-                }
-            ]
-        }
-    ]
+            name: '⚠️ Coming Soon', color: '#94a3b8',
+            doctors: [{ name: 'Level 4 courses will be added soon', schedule: [{ day: 'Saturday', slots: [{ id: 1, g: 'INFO' }] }] }],
+        },
+    ],
 };
 
 Object.keys(updatedCoursesData).forEach(level => {
-    updatedCoursesData[level] = (updatedCoursesData[level] || []).map(normalizeSubjectData);
+    updatedCoursesData[level] = updatedCoursesData[level].map(normalizeSubjectData);
 });
 
-// 3. Logic & State Management
-let selectedYear = null;
-let scheduleData = {};
-let previewData = null;
-let draggedSlot = null;
-let selectionMode = 'lectures';
+// ── 3. Application State ─────────────────────────────────────
+let selectedYear      = null;
+let scheduleData      = {};
+let previewData       = null;
+let draggedSlot       = null;
+let selectionMode     = 'lectures';
 let quickActionsState = null;
+let _lastRenderHash   = {};
 
+// ── 4. scheduleData Accessors ─────────────────────────────────
 function getCellEntries(key) {
     if (Array.isArray(scheduleData[key])) return scheduleData[key];
     if (scheduleData[key] && typeof scheduleData[key] === 'object') {
         const legacy = { ...scheduleData[key] };
-        if (!legacy.entryId) legacy.entryId = makeEntryId();
-        if (!legacy.type) legacy.type = 'lecture';
-        if (!legacy.teamsCode) legacy.teamsCode = '';
+        if (!legacy.entryId)   legacy.entryId   = makeEntryId();
+        if (!legacy.type)      legacy.type       = 'lecture';
+        if (!legacy.teamsCode) legacy.teamsCode  = '';
         scheduleData[key] = [legacy];
         return scheduleData[key];
     }
@@ -316,19 +250,16 @@ function getCellEntries(key) {
 }
 
 function addEntryToCell(key, entry) {
-    const entries = Array.isArray(scheduleData[key]) ? scheduleData[key] : [];
-    entries.push(entry);
-    scheduleData[key] = entries;
+    if (!Array.isArray(scheduleData[key])) scheduleData[key] = [];
+    scheduleData[key].push(entry);
 }
 
 function removeEntryById(entryId) {
     Object.keys(scheduleData).forEach(key => {
-        const filtered = getCellEntries(key).filter(entry => entry.entryId !== entryId);
-        if (filtered.length === 0) {
-            delete scheduleData[key];
-            return;
-        }
-        scheduleData[key] = filtered;
+        const filtered = getCellEntries(key).filter(e => e.entryId !== entryId);
+        if (filtered.length === 0) delete scheduleData[key];
+        else scheduleData[key] = filtered;
+        delete _lastRenderHash[key];
     });
 }
 
@@ -336,190 +267,202 @@ function makeEntryId() {
     return `slot_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function getSelectionType() {
-    return selectionMode === 'sections' ? 'section' : 'lecture';
-}
+// ── 5. Selection & Course Helpers ────────────────────────────
+function getSelectionType()  { return selectionMode === 'sections' ? 'section' : 'lecture'; }
 
-function getCourseByName(subjectName) {
-    const courses = updatedCoursesData[selectedYear] || [];
-    return courses.find(c => c.name === subjectName);
+function getCourseByName(name) {
+    return (updatedCoursesData[selectedYear] || []).find(c => c.name === name) || null;
 }
 
 function getSectionList(course) {
-    if (Array.isArray(course.sections) && course.sections.length > 0) {
-        return course.sections;
-    }
+    if (Array.isArray(course.sections) && course.sections.length > 0) return course.sections;
     return (course.doctors || [])
-        .filter(doctor => /sec/i.test(doctor.name))
-        .map(section => ({
-            name: section.name,
-            whatsappLink: section.whatsappLink || '',
-            schedule: section.schedule
-        }));
+        .filter(d => /sec/i.test(d.name))
+        .map(s => ({ name: s.name, whatsappLink: s.whatsappLink || '', schedule: s.schedule }));
 }
 
 function getCourseOptions(course, mode) {
-    if (mode === 'sections') {
-        return getSectionList(course);
-    }
-    return course.doctors || [];
+    return mode === 'sections' ? getSectionList(course) : (course.doctors || []);
 }
 
 function isSubjectLocked(subjectName, type = 'lecture') {
-    return Object.values(scheduleData).some(slotEntries =>
-        (slotEntries || []).some(entry => entry.name === subjectName && entry.type === type)
+    return Object.values(scheduleData).some(entries =>
+        (entries || []).some(e => e.name === subjectName && e.type === type)
     );
 }
 
+// ── 6. Firebase Load ─────────────────────────────────────────
+async function loadScheduleFromFirebase() {
+    try {
+        const snapshot = await firebase.database().ref('schedule').once('value');
+        const remote   = snapshot.val();
+        if (remote) {
+            Object.keys(remote).forEach(level => {
+                if (remote[level]?.length > 0) {
+                    updatedCoursesData[level] = remote[level].map(normalizeSubjectData);
+                }
+            });
+            console.info('[BIS] Schedule loaded from Firebase.');
+
+            // ── UI refresh after async load ───────────────────────
+            // loadSubjects() is called synchronously inside selectYear(),
+            // which runs before this async function resolves. If the user
+            // has already selected a year, the subject panel rendered with
+            // stale local stub data (sections: [] / no sections key).
+            // Now that Firebase has responded with the full section data,
+            // re-render the panel so the Sections toggle works correctly.
+            if (selectedYear !== null) {
+                loadSubjects(selectedYear);
+            }
+        }
+    } catch (err) {
+        console.warn('[BIS] Falling back to local data:', err.message);
+    }
+}
+
+// ── 7. Schedule Table Init ────────────────────────────────────
 function initScheduleTable() {
     const tbody = document.getElementById('scheduleBody');
     tbody.innerHTML = '';
     days.forEach(day => {
-        const row = document.createElement('tr');
+        const row     = document.createElement('tr');
         const dayCell = document.createElement('td');
-        dayCell.className = 'day-column';
+        dayCell.className   = 'day-column';
         dayCell.textContent = day;
         row.appendChild(dayCell);
         timeSlots.forEach(slot => {
             const cell = document.createElement('td');
-            cell.id = `${day}-${slot.id}`;
+            cell.id        = `${day}-${slot.id}`;
             cell.className = 'schedule-cell';
-            cell.setAttribute('data-day', day);
+            cell.setAttribute('data-day',  day);
             cell.setAttribute('data-slot', slot.id);
             cell.innerHTML = '<div class="slot-content slot-empty">Free</div>';
-            
-            // Events for Deletion & Selection
-            cell.addEventListener('click', () => handleSlotClick(day, slot.id));
-            cell.addEventListener('dragover', (e) => e.preventDefault());
-            cell.addEventListener('drop', (e) => handleDrop(e, day, slot.id));
-            
+            cell.addEventListener('click',    () => handleSlotClick(day, slot.id));
+            cell.addEventListener('dragover', e  => e.preventDefault());
+            cell.addEventListener('drop',     e  => handleDrop(e, day, slot.id));
             row.appendChild(cell);
         });
         tbody.appendChild(row);
     });
 }
 
-// Updates the .active class on the static toggle buttons to match selectionMode.
-// Never touches innerHTML — zero DOM cost.
+// ── 8. Toggle UI ─────────────────────────────────────────────
 function syncToggleUI() {
     document.querySelectorAll('.selector-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-mode') === selectionMode);
     });
 }
 
-function selectYear(year) {
+// ── 9. Year Selection (FIX H-5) ──────────────────────────────
+// Receives the clicked <button> element as `triggerEl` via
+// onclick="selectYear(1, this)" — no window.event dependency.
+function selectYear(year, triggerEl) {
     selectedYear = year;
     document.querySelectorAll('.year-card').forEach(c => c.classList.remove('active'));
-    if(window.event) window.event.currentTarget.closest('.year-card').classList.add('active');
+    if (triggerEl) triggerEl.classList.add('active');
 
-    // Reset mode first so loadSubjects renders the correct tab immediately
-    selectionMode = 'lectures';
+    selectionMode   = 'lectures';
+    scheduleData    = {};
+    previewData     = null;
+    _lastRenderHash = {};
     syncToggleUI();
-
-    loadSubjects(year);
-    document.getElementById('subjectSection').style.display = 'block';
-    document.getElementById('scheduleSection').style.display = 'block';
-    initScheduleTable();
-    scheduleData = {};
-    previewData = null;
     closeQuickActions();
+    initScheduleTable();
+    loadSubjects(year);
+
+    document.getElementById('subjectSection').style.display  = 'block';
+    document.getElementById('scheduleSection').style.display = 'block';
 }
 
+// ── 10. Subject List (FIX H-2, H-4) ─────────────────────────
 function loadSubjects(year) {
-    const container = document.getElementById('subjectsContainer');
-    container.innerHTML = '';
-
+    const container  = document.getElementById('subjectsContainer');
     const allCourses = updatedCoursesData[year] || [];
+    const type       = getSelectionType();
 
-    // Strictly filter by mode
     const courses = selectionMode === 'sections'
-        ? allCourses.filter(course => getSectionList(course).length > 0)
-        : allCourses.filter(course => (course.doctors || []).length > 0);
+        ? allCourses.filter(c => getSectionList(c).length > 0)
+        : allCourses.filter(c => (c.doctors || []).length > 0);
 
     if (courses.length === 0) {
-        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-secondary);"><p>No courses available for this year.</p></div>';
+        container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-secondary)"><p>No courses available for this selection.</p></div>';
+        container.onclick   = null;
         return;
     }
 
-    // Render subject cards only — toggle buttons live statically in index.html
-    container.innerHTML = courses.map((course) => {
-        const type           = getSelectionType();
-        const options        = getCourseOptions(course, selectionMode);
-        const isLocked       = isSubjectLocked(course.name, type);
-        const lockedClass    = isLocked ? 'subject-locked' : '';
-        const lockedBadge    = isLocked ? '<span class="locked-badge">\uD83D\uDD12 Enrolled</span>' : '';
-        const emptyStateText = selectionMode === 'sections' ? 'No sections available yet.' : 'No lectures available yet.';
+    container.innerHTML = courses.map(course => {
+        const options     = getCourseOptions(course, selectionMode);
+        const isLocked    = isSubjectLocked(course.name, type);
+        const lockedClass = isLocked ? 'subject-locked' : '';
+        const lockedBadge = isLocked ? '<span class="locked-badge">🔒 Enrolled</span>' : '';
+        const emptyText   = selectionMode === 'sections' ? 'No sections available yet.' : 'No lectures available yet.';
+
+        const items = options.length === 0
+            ? `<div class="doctor-item disabled">${emptyText}</div>`
+            : options.map((opt, idx) => `
+                <div class="doctor-item ${isLocked ? 'disabled' : ''}"
+                     data-subject-name="${escHtml(course.name)}"
+                     data-doctor-name="${escHtml(opt.name)}"
+                     data-color="${escHtml(course.color)}"
+                     data-doctor-index="${idx}"
+                     data-type="${escHtml(type)}">
+                    <div class="doctor-name">${type === 'section' ? '' : '👨‍🏫'} ${escHtml(opt.name)}</div>
+                    <div class="doctor-schedule">${escHtml(formatSchedule(opt.schedule))}</div>
+                </div>`).join('');
 
         return `
             <div class="subject-card ${lockedClass}">
                 <div class="subject-header">
-                    <div class="subject-color" style="background: ${course.color};"></div>
-                    <div class="subject-name">${course.name}</div>
+                    <div class="subject-color" style="background:${escHtml(course.color)};"></div>
+                    <div class="subject-name">${escHtml(course.name)}</div>
                     ${lockedBadge}
                 </div>
-                <div class="doctor-list">
-                    ${options.length === 0
-                        ? `<div class="doctor-item disabled">${emptyStateText}</div>`
-                        : options.map((option, idx) => `
-                        <div class="doctor-item ${isLocked ? 'disabled' : ''}"
-                             data-subject-name="${course.name}"
-                             data-doctor-name="${option.name}"
-                             data-color="${course.color}"
-                             data-doctor-index="${idx}"
-                             data-type="${type}">
-                            <div class="doctor-name">${type === 'section' ? '' : '\uD83D\uDC68\u200D\uD83C\uDFEB'} ${option.name}</div>
-                            <div class="doctor-schedule">${formatSchedule(option.schedule)}</div>
-                        </div>`).join('')}
-                </div>
+                <div class="doctor-list">${items}</div>
             </div>`;
     }).join('');
 
-    // Single delegated handler — replacing .onclick avoids listener accumulation
-    // across repeated loadSubjects calls without needing removeEventListener.
-    container.onclick = function(e) {
+    // Single delegated listener — assigning to .onclick removes any prior handler
+    container.onclick = function (e) {
         const item = e.target.closest('.doctor-item:not(.disabled)');
         if (!item) return;
-
-        const subjectName    = item.getAttribute('data-subject-name');
-        const doctorName     = item.getAttribute('data-doctor-name');
-        const color          = item.getAttribute('data-color');
-        const doctorIndex    = parseInt(item.getAttribute('data-doctor-index'), 10);
-        const type           = item.getAttribute('data-type');
-        const course         = allCourses.find(c => c.name === subjectName);
-        const options        = getCourseOptions(course, selectionMode);
-        const selectedOption = options[doctorIndex];
-
+        const subjectName = item.getAttribute('data-subject-name');
+        const doctorIndex = parseInt(item.getAttribute('data-doctor-index'), 10);
+        const course      = allCourses.find(c => c.name === subjectName);
+        if (!course) return;
+        const options = getCourseOptions(course, selectionMode);
+        const opt     = options[doctorIndex];
+        if (!opt) return;
         previewDoctor({
             subjectName,
-            doctorName,
-            color,
-            schedule:     selectedOption.schedule,
-            type,
-            whatsappLink: selectedOption.whatsappLink || '#'
+            doctorName:   item.getAttribute('data-doctor-name'),
+            color:        item.getAttribute('data-color'),
+            schedule:     opt.schedule,
+            type:         item.getAttribute('data-type'),
+            whatsappLink: opt.whatsappLink || '#',
         }, item);
     };
 }
+
 function formatSchedule(schedule) {
-    return schedule.map(item => `${item.day}: ${item.slots.map(s => s.g).join(', ')}`).join(' | ');
+    return schedule.map(d => `${d.day}: ${d.slots.map(s => s.g).join(', ')}`).join(' | ');
 }
 
+// ── 11. Preview ───────────────────────────────────────────────
 function previewDoctor(previewItem, selectedElement) {
     clearPreview();
     previewData = {
-        entryId: makeEntryId(),
-        name: previewItem.subjectName,
-        doctor: previewItem.doctorName,
-        color: previewItem.color,
-        schedule: previewItem.schedule,
-        type: previewItem.type,
-        whatsappLink: previewItem.whatsappLink
+        entryId:      makeEntryId(),
+        name:         previewItem.subjectName,
+        doctor:       previewItem.doctorName,
+        color:        previewItem.color,
+        schedule:     previewItem.schedule,
+        type:         previewItem.type,
+        whatsappLink: previewItem.whatsappLink,
     };
     document.querySelectorAll('.doctor-item').forEach(i => i.classList.remove('selected'));
     selectedElement.classList.add('selected');
-    
-    // Group slots by cell key so we can render a combined preview per cell
-    // (a TA may have two half-slots in the same 2-hour block: h=1 and h=2)
-    const cellSlotMap = new Map(); // key → [slotData, ...]
+
+    const cellSlotMap = new Map();
     previewData.schedule.forEach(item => {
         item.slots.forEach(slotData => {
             const key = `${item.day}-${slotData.id}`;
@@ -531,155 +474,106 @@ function previewDoctor(previewItem, selectedElement) {
     cellSlotMap.forEach((daySlots, key) => {
         const cell = document.getElementById(key);
         if (!cell) return;
-
-        const entries       = getCellEntries(key);
-        const hasLecture    = entries.some(e => e.type === 'lecture');
+        const entries        = getCellEntries(key);
+        const hasLecture     = entries.some(e => e.type === 'lecture');
         const sectionEntries = entries.filter(e => e.type === 'section');
         const occupiedHalves = new Set(sectionEntries.map(e => e.half).filter(Boolean));
 
         if (previewData.type === 'lecture') {
-            // Lectures need the cell completely empty
             if (entries.length > 0) return;
             const slotData = daySlots[0].slotData;
             cell.classList.add('preview-highlight');
             cell.innerHTML = `
-                <div class="slot-content slot-preview" style="background:${previewData.color};opacity:0.5;">
-                    <div class="slot-subject">${previewData.name}</div>
-                    <div class="slot-doctor">${previewData.doctor}</div>
-                    <div class="slot-group">${slotData.g}</div>
+                <div class="slot-content slot-preview" style="background:${escHtml(previewData.color)};opacity:0.5;">
+                    <div class="slot-subject">${escHtml(previewData.name)}</div>
+                    <div class="slot-doctor">${escHtml(previewData.doctor)}</div>
+                    <div class="slot-group">${escHtml(slotData.g)}</div>
                     <div class="slot-hint">Click to add</div>
                 </div>`;
             return;
         }
 
-        // Section: collect only the half-slots that are actually free
         const validSlots = daySlots.filter(({ slotData }) => {
             if (hasLecture) return false;
-            const requestedHalf = slotData.h || null;
-            // If no h value, check if there's a free half at all
-            if (!requestedHalf) return sectionEntries.length < 2;
-            // If h value exists, only allow if that specific half is free
-            return !occupiedHalves.has(requestedHalf);
+            const rh = slotData.h || null;
+            if (!rh) return sectionEntries.length < 2;
+            return !occupiedHalves.has(rh);
         });
-
         if (validSlots.length === 0) return;
 
         cell.classList.add('preview-highlight');
-
-        // Build preview HTML — show each valid half-slot as its own strip
-        const previewParts = validSlots.map(({ slotData }) => {
+        const parts = validSlots.map(({ slotData }) => {
             const halfClass = slotData.h ? `slot-half-height slot-half-${slotData.h}` : '';
             return `
                 <div class="slot-content slot-preview slot-section ${halfClass}"
-                     style="background:${previewData.color};opacity:0.5;"
-                     data-preview-h="${slotData.h || ''}"
-                     data-preview-g="${slotData.g}">
-                    <div class="slot-subject">${previewData.name}</div>
-                    <div class="slot-doctor">${previewData.doctor}</div>
-                    <div class="slot-group">${slotData.g}</div>
+                     style="background:${escHtml(previewData.color)};opacity:0.5;"
+                     data-preview-h="${escHtml(String(slotData.h || ''))}"
+                     data-preview-g="${escHtml(slotData.g)}">
+                    <div class="slot-subject">${escHtml(previewData.name)}</div>
+                    <div class="slot-doctor">${escHtml(previewData.doctor)}</div>
+                    <div class="slot-group">${escHtml(slotData.g)}</div>
                     <div class="slot-hint">Click to add</div>
                 </div>`;
         });
-
         const wrapClass = validSlots.length > 1 ? 'slot-stack slot-split' : 'slot-stack';
-        cell.innerHTML = `<div class="${wrapClass}">${previewParts.join('')}</div>`;
+        cell.innerHTML = `<div class="${wrapClass}">${parts.join('')}</div>`;
     });
 }
 
-// ✅ 2. Feature: Individual Slot Management
+// ── 12. Slot Click ────────────────────────────────────────────
 function handleSlotClick(day, slotId) {
     const key = `${day}-${slotId}`;
     if (!previewData) return;
 
-    // Collect all of this TA's slots for this day+period
     const matchingSlots = [];
     previewData.schedule.forEach(item => {
-        if (item.day === day) {
-            item.slots.forEach(s => { if (s.id === slotId) matchingSlots.push(s); });
-        }
+        if (item.day === day) item.slots.forEach(s => { if (s.id === slotId) matchingSlots.push(s); });
     });
-
     if (matchingSlots.length === 0) return alert('⚠️ This slot is not available for the selected doctor.');
 
     const existing       = getCellEntries(key);
-    const hasLecture     = existing.some(entry => entry.type === 'lecture');
-    const sectionEntries = existing.filter(entry => entry.type === 'section');
-    const occupiedHalves = new Set(sectionEntries.map(entry => entry.half).filter(Boolean));
+    const hasLecture     = existing.some(e => e.type === 'lecture');
+    const sectionEntries = existing.filter(e => e.type === 'section');
+    const occupiedHalves = new Set(sectionEntries.map(e => e.half).filter(Boolean));
 
-    if (previewData.type === 'section' && hasLecture) {
-        return alert('⚠️ Conflict: You already have a lecture scheduled at this time.');
-    }
-    if (previewData.type === 'lecture' && existing.length > 0) {
-        return alert('⚠️ Conflict: This time slot already has sections assigned.');
-    }
+    if (previewData.type === 'section' && hasLecture) return alert('⚠️ Conflict: You already have a lecture scheduled at this time.');
+    if (previewData.type === 'lecture' && existing.length > 0) return alert('⚠️ Conflict: This time slot already has sections assigned.');
 
     if (previewData.type === 'section') {
-        // ── Determine which single slot to place ────────────────────────────
-        // If the student clicked directly on a specific preview strip (half-slot),
-        // that strip carries data-preview-h so we honor exactly that half.
-        // If they clicked the cell container itself, we pick the best free slot.
-        const cell = document.getElementById(key);
-        const clickedStrip = cell && cell.querySelector('[data-preview-h]');
+        const cell           = document.getElementById(key);
+        const clickedStrip   = cell?.querySelector('[data-preview-h]');
         const clickedHalfStr = clickedStrip ? clickedStrip.getAttribute('data-preview-h') : null;
-        const clickedHalf = clickedHalfStr ? parseInt(clickedHalfStr, 10) : null;
+        const clickedHalf    = clickedHalfStr ? parseInt(clickedHalfStr, 10) : null;
 
-        // Pick the ONE slot to place:
-        // Priority 1 — slot matching the strip the student actually clicked
-        // Priority 2 — first placeable slot (cell had only one visible strip anyway)
-        let chosenSlot = null;
-        if (clickedHalf) {
-            chosenSlot = matchingSlots.find(s => s.h === clickedHalf) || null;
-        }
+        let chosenSlot = clickedHalf ? (matchingSlots.find(s => s.h === clickedHalf) || null) : null;
         if (!chosenSlot) {
-            // Fall back to the first slot whose half is free
             chosenSlot = matchingSlots.find(s => {
                 const h = s.h || null;
-                if (!h) return occupiedHalves.size < 2;
-                return !occupiedHalves.has(h);
+                return h ? !occupiedHalves.has(h) : occupiedHalves.size < 2;
             }) || null;
         }
-
         if (!chosenSlot) {
             return occupiedHalves.size >= 2
                 ? alert('⚠️ This 2-hour block already has sections in both hours.')
                 : alert('⚠️ Conflict: The required hour for this section is already taken.');
         }
 
-        // Determine the half to assign
-        const requestedHalf = chosenSlot.h || null;
+        const rh = chosenSlot.h || null;
         let assignedHalf;
-        if (requestedHalf && !occupiedHalves.has(requestedHalf)) {
-            assignedHalf = requestedHalf;
-        } else if (!requestedHalf) {
-            assignedHalf = occupiedHalves.has(1) ? 2 : 1;
-        } else {
-            return alert('⚠️ Conflict: The required hour for this section is already taken.');
-        }
+        if (rh && !occupiedHalves.has(rh)) { assignedHalf = rh; }
+        else if (!rh) { assignedHalf = occupiedHalves.has(1) ? 2 : 1; }
+        else { return alert('⚠️ Conflict: The required hour for this section is already taken.'); }
 
-        if (getCellEntries(key).filter(e => e.type === 'section').length >= 2) {
+        if (getCellEntries(key).filter(e => e.type === 'section').length >= 2)
             return alert('⚠️ This 2-hour block already has sections in both hours.');
-        }
 
-        // Add exactly ONE entry
-        addEntryToCell(key, {
-            ...previewData,
-            entryId:   makeEntryId(),   // fresh ID for this single placement
-            group:     chosenSlot.g,
-            teamsCode: chosenSlot.teamsCode || '',
-            half:      assignedHalf
-        });
-
+        addEntryToCell(key, { ...previewData, entryId: makeEntryId(), group: chosenSlot.g, teamsCode: chosenSlot.teamsCode || '', half: assignedHalf });
     } else {
-        // Lecture — always a single slot
-        const slotData = matchingSlots[0];
-        addEntryToCell(key, {
-            ...previewData,
-            group:     slotData.g,
-            teamsCode: slotData.teamsCode || '',
-            half:      null
-        });
+        const sd = matchingSlots[0];
+        addEntryToCell(key, { ...previewData, group: sd.g, teamsCode: sd.teamsCode || '', half: null });
     }
 
+    delete _lastRenderHash[key];
     clearPreview();
     previewData = null;
     document.querySelectorAll('.doctor-item').forEach(i => i.classList.remove('selected'));
@@ -687,48 +581,33 @@ function handleSlotClick(day, slotId) {
     loadSubjects(selectedYear);
 }
 
-// ✅ 3. Feature: ENHANCED Drag and Drop with Valid Slot Highlighting
+// ── 13. Drag Highlighting ────────────────────────────────────
 function highlightValidDropTargets(entryData) {
-    // Clear any existing highlights
     clearDragHighlights();
-    
-    // Find the course and doctor
-    const course = updatedCoursesData[selectedYear].find(c => c.name === entryData.name);
+    const course  = (updatedCoursesData[selectedYear] || []).find(c => c.name === entryData.name);
     if (!course) return;
-    
     const options = entryData.type === 'section' ? getSectionList(course) : course.doctors;
-    const option = options.find(d => d.name === entryData.doctor);
+    const option  = (options || []).find(d => d.name === entryData.doctor);
     if (!option) return;
-    
-    // Highlight all valid slots for this doctor with the course color at 30% opacity
+
     option.schedule.forEach(item => {
         item.slots.forEach(slotData => {
             const cellKey        = `${item.day}-${slotData.id}`;
             const cell           = document.getElementById(cellKey);
             const entries        = getCellEntries(cellKey);
-            const hasLecture     = entries.some(entry => entry.type === 'lecture');
-            const sectionEntries = entries.filter(entry => entry.type === 'section');
-            const occupiedHalves = new Set(sectionEntries.map(entry => entry.half).filter(Boolean));
-
-            let validByType;
+            const hasLecture     = entries.some(e => e.type === 'lecture');
+            const sectionEntries = entries.filter(e => e.type === 'section');
+            const occupiedHalves = new Set(sectionEntries.map(e => e.half).filter(Boolean));
+            let valid;
             if (entryData.type === 'lecture') {
-                validByType = entries.length === 0;
+                valid = entries.length === 0;
             } else {
-                if (hasLecture) { validByType = false; }
-                else {
-                    const requestedHalf = slotData.h || null;
-                    if (!requestedHalf) {
-                        validByType = occupiedHalves.size < 2;
-                    } else {
-                        validByType = !occupiedHalves.has(requestedHalf);
-                    }
-                }
+                const rh = slotData.h || null;
+                valid = !hasLecture && (rh ? !occupiedHalves.has(rh) : occupiedHalves.size < 2);
             }
-
-            if (cell && validByType) {
+            if (cell && valid) {
                 cell.classList.add('drag-target-highlight');
-                cell.style.backgroundColor = `${entryData.color}30`;
-                cell.style.border          = `2px dashed ${entryData.color}`;
+                cell.style.setProperty('--drag-color', entryData.color);
             }
         });
     });
@@ -737,21 +616,20 @@ function highlightValidDropTargets(entryData) {
 function clearDragHighlights() {
     document.querySelectorAll('.drag-target-highlight').forEach(cell => {
         cell.classList.remove('drag-target-highlight');
-        cell.style.backgroundColor = '';
-        cell.style.border = '';
+        cell.style.removeProperty('--drag-color');
     });
 }
 
+// ── 14. HTML5 Drag Handlers ───────────────────────────────────
 function handleDragStart(e, day, slotId, entryId) {
-    const key = `${day}-${slotId}`;
+    const key   = `${day}-${slotId}`;
     const entry = getCellEntries(key).find(item => item.entryId === entryId);
     if (!entry) return;
     draggedSlot = { key, data: entry };
     e.currentTarget.style.opacity = '0.5';
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed  = 'move';
     e.dataTransfer.setData('text/plain', entryId);
-    
-    highlightValidDropTargets(draggedSlot.data);
+    highlightValidDropTargets(entry);
 }
 
 function handleDragEnd(e) {
@@ -761,12 +639,11 @@ function handleDragEnd(e) {
 }
 
 function findSlotInProviderSchedule(entryData, targetDay, targetSlotId) {
-    const course = getCourseByName(entryData.name);
+    const course  = getCourseByName(entryData.name);
     if (!course) return null;
     const options = entryData.type === 'section' ? getSectionList(course) : course.doctors;
-    const option = (options || []).find(d => d.name === entryData.doctor);
+    const option  = (options || []).find(d => d.name === entryData.doctor);
     if (!option) return null;
-
     for (const dayItem of option.schedule || []) {
         if (dayItem.day !== targetDay) continue;
         const found = (dayItem.slots || []).find(s => s.id === targetSlotId);
@@ -779,197 +656,153 @@ function handleDrop(e, targetDay, targetSlotId) {
     e.preventDefault();
     if (!draggedSlot) return;
 
-    const targetKey = `${targetDay}-${targetSlotId}`;
+    const targetKey      = `${targetDay}-${targetSlotId}`;
+    const allTarget      = getCellEntries(targetKey);
+    const targetEntries  = allTarget.filter(e => e.entryId !== draggedSlot.data.entryId);
+    const hasLecture     = targetEntries.some(e => e.type === 'lecture');
+    const targetSections = targetEntries.filter(e => e.type === 'section');
+    const occupiedHalves = new Set(targetSections.map(e => e.half).filter(Boolean));
 
-    // ── Build a clean picture of the target cell that EXCLUDES the dragged
-    // entry. This is essential for both same-cell repositioning (where the
-    // entry is still present in scheduleData) and cross-cell moves (where
-    // the entry is absent but its entryId is still distinct).
-    const allTargetEntries   = getCellEntries(targetKey);
-    const targetEntries      = allTargetEntries.filter(e => e.entryId !== draggedSlot.data.entryId);
-    const hasLecture         = targetEntries.some(entry => entry.type === 'lecture');
-    const targetSections     = targetEntries.filter(entry => entry.type === 'section');
-    const occupiedHalves     = new Set(targetSections.map(e => e.half).filter(Boolean));
+    if (draggedSlot.data.type === 'lecture' && targetEntries.length > 0) { clearDragHighlights(); return alert('⚠️ Target slot is already occupied!'); }
+    if (draggedSlot.data.type === 'section' && hasLecture)                { clearDragHighlights(); return alert('⚠️ Conflict: You have a lecture at this time!'); }
 
-    // Guard: lecture into occupied cell (not counting itself)
-    if (draggedSlot.data.type === 'lecture' && targetEntries.length > 0) {
-        clearDragHighlights();
-        return alert('⚠️ Target slot is already occupied!');
-    }
-    // Guard: section into a cell that has a lecture
-    if (draggedSlot.data.type === 'section' && hasLecture) {
-        clearDragHighlights();
-        return alert('⚠️ Conflict: You have a lecture at this time!');
-    }
-
-    // Helper: remove the dragged entry from its source cell
     function removeFromSource() {
-        const sourceEntries = getCellEntries(draggedSlot.key)
-            .filter(entry => entry.entryId !== draggedSlot.data.entryId);
-        if (sourceEntries.length === 0) delete scheduleData[draggedSlot.key];
-        else scheduleData[draggedSlot.key] = sourceEntries;
+        const src = getCellEntries(draggedSlot.key).filter(e => e.entryId !== draggedSlot.data.entryId);
+        if (src.length === 0) delete scheduleData[draggedSlot.key];
+        else scheduleData[draggedSlot.key] = src;
+        delete _lastRenderHash[draggedSlot.key];
     }
 
     if (draggedSlot.data.type === 'section') {
-        // Find the provider-schedule slot for the target cell.
-        // Prefer an exact half-match so TAs with two slots in the same period
-        // (e.g. h=1 and h=2 both on Tuesday P1) resolve to the right one.
         const draggedHalf = draggedSlot.data.half || null;
         let resolvedSlot  = null;
-
         const course  = getCourseByName(draggedSlot.data.name);
         const options = course ? getSectionList(course) : [];
         const option  = options.find(d => d.name === draggedSlot.data.doctor);
-
         if (option) {
             for (const dayItem of option.schedule || []) {
                 if (dayItem.day !== targetDay) continue;
-                const exactMatch = (dayItem.slots || []).find(
-                    s => s.id === targetSlotId && (s.h || null) === draggedHalf
-                );
-                const anyMatch = (dayItem.slots || []).find(s => s.id === targetSlotId);
+                const exactMatch = (dayItem.slots || []).find(s => s.id === targetSlotId && (s.h || null) === draggedHalf);
+                const anyMatch   = (dayItem.slots || []).find(s => s.id === targetSlotId);
                 resolvedSlot = exactMatch || anyMatch || null;
                 if (resolvedSlot) break;
             }
         }
+        if (!resolvedSlot) { clearDragHighlights(); return alert('⚠️ Not available in provider schedule!'); }
 
-        if (!resolvedSlot) {
-            clearDragHighlights();
-            return alert('⚠️ Not available in provider schedule!');
-        }
-
-        // Determine the half to assign:
-        // 1. Use the resolved slot's h if it is free.
-        // 2. Fall back to the dragged entry's stored half if different and free.
-        // 3. Auto-pick the remaining free half if neither is specified.
-        const requestedHalf = resolvedSlot.h || null;
+        const rh = resolvedSlot.h || null;
         let assignedHalf;
-
-        if (requestedHalf && !occupiedHalves.has(requestedHalf)) {
-            assignedHalf = requestedHalf;
-        } else if (!requestedHalf && draggedHalf && !occupiedHalves.has(draggedHalf)) {
-            // No h in schedule but the dragged entry already has a half — keep it
-            assignedHalf = draggedHalf;
-        } else if (!requestedHalf && !draggedHalf && occupiedHalves.size < 2) {
-            // Neither source has a half preference — auto-pick the free one
-            assignedHalf = occupiedHalves.has(1) ? 2 : 1;
-        } else {
-            clearDragHighlights();
-            return occupiedHalves.size >= 2
-                ? alert('⚠️ This 2-hour block already has sections in both hours.')
-                : alert('⚠️ Conflict: The required hour for this section is already taken.');
-        }
+        if (rh && !occupiedHalves.has(rh)) { assignedHalf = rh; }
+        else if (!rh && draggedHalf && !occupiedHalves.has(draggedHalf)) { assignedHalf = draggedHalf; }
+        else if (!rh && !draggedHalf && occupiedHalves.size < 2) { assignedHalf = occupiedHalves.has(1) ? 2 : 1; }
+        else { clearDragHighlights(); return (occupiedHalves.size >= 2 ? alert('⚠️ Both hours taken.') : alert('⚠️ Required hour taken.')); }
 
         removeFromSource();
-        addEntryToCell(targetKey, {
-            ...draggedSlot.data,
-            group:     resolvedSlot.g,
-            teamsCode: resolvedSlot.teamsCode || '',
-            half:      assignedHalf
-        });
-
+        addEntryToCell(targetKey, { ...draggedSlot.data, group: resolvedSlot.g, teamsCode: resolvedSlot.teamsCode || '', half: assignedHalf });
     } else {
-        // Lecture drop
-        const slotAvailability = findSlotInProviderSchedule(draggedSlot.data, targetDay, targetSlotId);
-        if (!slotAvailability) {
-            clearDragHighlights();
-            return alert('⚠️ Not available in provider schedule!');
-        }
+        const slotAvail = findSlotInProviderSchedule(draggedSlot.data, targetDay, targetSlotId);
+        if (!slotAvail) { clearDragHighlights(); return alert('⚠️ Not available in provider schedule!'); }
         removeFromSource();
-        addEntryToCell(targetKey, {
-            ...draggedSlot.data,
-            group:     slotAvailability.g,
-            teamsCode: slotAvailability.teamsCode || '',
-            half:      null
-        });
+        addEntryToCell(targetKey, { ...draggedSlot.data, group: slotAvail.g, teamsCode: slotAvail.teamsCode || '', half: null });
     }
 
+    delete _lastRenderHash[targetKey];
     clearDragHighlights();
     draggedSlot = null;
     renderSchedule();
 }
 
-function openQuickActions(entry, event) {    if (draggedSlot.data.type === 'section') {
-        // Build occupiedHalves from the TARGET cell, but if the drag is within
-        // the same cell, the dragged entry is still there — exclude it so we
-        // don't falsely count the half we're about to vacate.
-        const occupiedHalves = new Set(
-            targetSections
-                .filter(entry => entry.entryId !== draggedSlot.data.entryId)
-                .map(entry => entry.half)
-                .filter(Boolean)
-        );
+// ── 15. Touch Drag & Drop — FIX M-5 ──────────────────────────
+// Pointer-event based touch DnD. Works on iOS, Android, and
+// any pointer-capable device. Uses the same handleDrop() logic
+// so conflict rules are identical on all platforms.
+let touchDragState = null;
 
-        // Find the correct slot in the provider schedule.
-        // findSlotInProviderSchedule returns the FIRST match; for TAs with two
-        // slots in the same period we must match by the dragged entry's own half.
-        const draggedHalf = draggedSlot.data.half || null;
-        let resolvedSlot = null;
+function initTouchDrag(el, day, slotId, entryId) {
+    let longPressTimer = null;
+    let isDragging     = false;
 
-        const course = getCourseByName(draggedSlot.data.name);
-        if (course) {
-            const options = draggedSlot.data.type === 'section'
-                ? getSectionList(course) : course.doctors;
-            const option = (options || []).find(d => d.name === draggedSlot.data.doctor);
-            if (option) {
-                for (const dayItem of option.schedule || []) {
-                    if (dayItem.day !== targetDay) continue;
-                    // Prefer the slot whose h matches the dragged entry's half;
-                    // fall back to the first slot with matching id.
-                    const exactMatch = (dayItem.slots || []).find(
-                        s => s.id === targetSlotId && (s.h || null) === draggedHalf
-                    );
-                    const anyMatch = (dayItem.slots || []).find(s => s.id === targetSlotId);
-                    resolvedSlot = exactMatch || anyMatch || null;
-                    if (resolvedSlot) break;
-                }
-            }
+    el.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'mouse') return; // desktop uses HTML5 DnD
+        isDragging = false;
+
+        longPressTimer = setTimeout(() => {
+            const key   = `${day}-${slotId}`;
+            const entry = getCellEntries(key).find(i => i.entryId === entryId);
+            if (!entry) return;
+
+            isDragging  = true;
+            draggedSlot = { key, data: entry };
+            el.setPointerCapture(e.pointerId);
+
+            const rect  = el.getBoundingClientRect();
+            const ghost = el.cloneNode(true);
+            Object.assign(ghost.style, {
+                position: 'fixed', left: `${rect.left}px`, top: `${rect.top}px`,
+                width: `${rect.width}px`, opacity: '0.8', pointerEvents: 'none',
+                zIndex: '9000', borderRadius: '8px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.3)', transition: 'none',
+            });
+            document.body.appendChild(ghost);
+            el.style.opacity = '0.35';
+            highlightValidDropTargets(entry);
+
+            touchDragState = {
+                entryId, ghost, sourceEl: el,
+                offsetX: e.clientX - rect.left,
+                offsetY: e.clientY - rect.top,
+            };
+
+            // Haptic feedback where available
+            if (navigator.vibrate) navigator.vibrate(40);
+        }, 350); // 350 ms long-press to start drag
+    }, { passive: true });
+
+    el.addEventListener('pointermove', e => {
+        if (!isDragging || !touchDragState || touchDragState.entryId !== entryId) return;
+        const { ghost, offsetX, offsetY } = touchDragState;
+        ghost.style.left = `${e.clientX - offsetX}px`;
+        ghost.style.top  = `${e.clientY - offsetY}px`;
+    }, { passive: true });
+
+    el.addEventListener('pointerup', e => {
+        clearTimeout(longPressTimer);
+        if (!isDragging || !touchDragState || touchDragState.entryId !== entryId) return;
+
+        const { ghost, sourceEl } = touchDragState;
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const cell   = target?.closest('.schedule-cell');
+
+        if (cell) {
+            const targetDay    = cell.getAttribute('data-day');
+            const targetSlotId = parseInt(cell.getAttribute('data-slot'), 10);
+            handleDrop({ preventDefault: () => {} }, targetDay, targetSlotId);
         }
 
-        if (!resolvedSlot) {
-            clearDragHighlights();
-            return alert('⚠️ Not available in provider schedule!');
+        ghost.remove();
+        sourceEl.style.opacity = '1';
+        clearDragHighlights();
+        draggedSlot    = null;
+        touchDragState = null;
+        isDragging     = false;
+    }, { passive: true });
+
+    el.addEventListener('pointercancel', () => {
+        clearTimeout(longPressTimer);
+        if (touchDragState?.entryId === entryId) {
+            touchDragState.ghost.remove();
+            touchDragState.sourceEl.style.opacity = '1';
         }
-
-        const requestedHalf = resolvedSlot.h || null;
-
-        // Smart half assignment — identical logic to handleSlotClick
-        let assignedHalf;
-        if (requestedHalf && !occupiedHalves.has(requestedHalf)) {
-            assignedHalf = requestedHalf;
-        } else if (!requestedHalf && occupiedHalves.size < 2) {
-            assignedHalf = occupiedHalves.has(1) ? 2 : 1;
-        } else {
-            clearDragHighlights();
-            return occupiedHalves.size >= 2
-                ? alert('⚠️ This 2-hour block already has sections in both hours.')
-                : alert('⚠️ Conflict: The required hour for this section is already taken.');
-        }
-
-        removeFromSource();
-        addEntryToCell(targetKey, {
-            ...draggedSlot.data,
-            group:     resolvedSlot.g,
-            teamsCode: resolvedSlot.teamsCode || '',
-            half:      assignedHalf
-        });
-
-    } else {
-        // Lecture drop — slotAvailability already validated above
-        removeFromSource();
-        addEntryToCell(targetKey, {
-            ...draggedSlot.data,
-            group:     slotAvailability ? slotAvailability.g     : draggedSlot.data.group,
-            teamsCode: slotAvailability ? slotAvailability.teamsCode || '' : draggedSlot.data.teamsCode || '',
-            half:      null
-        });
-    }
-
-    clearDragHighlights();
-    draggedSlot = null;
-    renderSchedule();
+        clearDragHighlights();
+        draggedSlot    = null;
+        touchDragState = null;
+        isDragging     = false;
+    }, { passive: true });
 }
 
+// ── 16. Quick Actions — FIX C-1 ──────────────────────────────
+// The corrupted duplicate declaration has been removed.
+// This is the single, authoritative implementation.
 function openQuickActions(entry, event) {
     closeQuickActions();
     quickActionsState = { entryId: entry.entryId };
@@ -978,39 +811,27 @@ function openQuickActions(entry, event) {
     menu.className = 'quick-actions-menu';
     menu.id = 'quickActionsMenu';
     menu.innerHTML = `
-        <div class="quick-title">${entry.name} - ${entry.group}${entry.type === 'section' ? ' <span class="sec-pill">SEC</span>' : ''}</div>
-        <div class="quick-sub">${entry.doctor}</div>
+        <div class="quick-title">${escHtml(entry.name)} - ${escHtml(entry.group)}${entry.type === 'section' ? ' <span class="sec-pill">SEC</span>' : ''}</div>
+        <div class="quick-sub">${escHtml(entry.doctor)}</div>
         <button type="button" class="quick-btn" data-action="copy">Copy Teams Code</button>
         <button type="button" class="quick-btn" data-action="whatsapp">Go to WhatsApp Group</button>
-        <button type="button" class="quick-btn danger" data-action="remove">Remove from Schedule</button>
-    `;
+        <button type="button" class="quick-btn danger" data-action="remove">Remove from Schedule</button>`;
     document.body.appendChild(menu);
 
-    const x = Math.min(event.clientX + 10, window.innerWidth - 260);
+    const x = Math.min(event.clientX + 10, window.innerWidth  - 260);
     const y = Math.min(event.clientY + 10, window.innerHeight - 230);
     menu.style.left = `${x}px`;
-    menu.style.top = `${y}px`;
+    menu.style.top  = `${y}px`;
 
     menu.querySelector('[data-action="copy"]').addEventListener('click', async () => {
-        const teamsCode = entry.teamsCode || 'Coming Soon';
-        try {
-            if (navigator.clipboard) {
-                await navigator.clipboard.writeText(teamsCode);
-                alert('Teams code copied.');
-            } else {
-                alert(`Teams Code: ${teamsCode}`);
-            }
-        } catch (error) {
-            alert(`Teams Code: ${teamsCode}`);
-        }
+        const code = entry.teamsCode || 'Coming Soon';
+        try { await navigator.clipboard.writeText(code); alert('Teams code copied.'); }
+        catch { alert(`Teams Code: ${code}`); }
     });
 
     menu.querySelector('[data-action="whatsapp"]').addEventListener('click', () => {
-        if (!entry.whatsappLink || entry.whatsappLink === '#') {
-            alert('Contact link will be available soon.');
-            return;
-        }
-        window.open(entry.whatsappLink, '_blank');
+        if (!entry.whatsappLink || entry.whatsappLink === '#') { alert('Contact link will be available soon.'); return; }
+        window.open(entry.whatsappLink, '_blank', 'noopener,noreferrer');
     });
 
     menu.querySelector('[data-action="remove"]').addEventListener('click', () => {
@@ -1022,195 +843,267 @@ function openQuickActions(entry, event) {
 }
 
 function closeQuickActions() {
-    const menu = document.getElementById('quickActionsMenu');
-    if (menu) menu.remove();
+    document.getElementById('quickActionsMenu')?.remove();
     quickActionsState = null;
 }
 
+// ── 17. Render Schedule — FIX H-4 ────────────────────────────
+// Cells are only repainted when their content hash changes.
+// Touch DnD listeners are attached once at paint time.
 function renderSchedule() {
     days.forEach(day => {
         timeSlots.forEach(slot => {
-            const cell = document.getElementById(`${day}-${slot.id}`);
-            const key = `${day}-${slot.id}`;
+            const key     = `${day}-${slot.id}`;
             const entries = getCellEntries(key);
-            
-            if (entries.length > 0) {
-                const sortedEntries = [...entries].sort((a, b) => {
-                    if (a.type === b.type) {
-                        if (a.type === 'section') {
-                            return (a.half || 0) - (b.half || 0);
-                        }
-                        return 0;
-                    }
-                    return a.type === 'lecture' ? -1 : 1;
-                });
-                const isSplit = sortedEntries.every(entry => entry.type === 'section');
-                cell.innerHTML = `
-                    <div class="slot-stack ${isSplit ? 'slot-split' : ''}">
-                        ${sortedEntries.map(entry => `
-                            <div class="slot-content slot-confirmed ${entry.type === 'section' ? `slot-section slot-half-height slot-half-${entry.half || ''}` : ''}" 
-                                 data-entry-id="${entry.entryId}" 
-                                 draggable="true"
-                                 style="background: ${entry.color}; color: white; cursor: move;">
-                                ${entry.type === 'section' ? '<span class="sec-badge">SEC</span>' : ''}
-                                <div class="slot-subject">${entry.name}</div>
-                                <div class="slot-doctor">${entry.doctor}</div>
-                                <div class="slot-group">${entry.group}</div>
-                                <div class="slot-delete-hint">Click for actions</div>
-                            </div>
-                        `).join('')}
-                    </div>`;
+            const hash    = JSON.stringify(entries);
+            if (_lastRenderHash[key] === hash) return;
+            _lastRenderHash[key] = hash;
 
-                cell.querySelectorAll('.slot-confirmed').forEach(div => {
-                    const entryId = div.getAttribute('data-entry-id');
-                    div.setAttribute('draggable', 'true');
-                    div.addEventListener('dragstart', (e) => handleDragStart(e, day, slot.id, entryId));
-                    div.addEventListener('dragend', handleDragEnd);
-                    div.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const entry = getCellEntries(key).find(item => item.entryId === entryId);
-                        if (!entry) return;
-                        openQuickActions(entry, e);
-                    });
-                });
-            } else {
+            const cell = document.getElementById(key);
+            if (!cell) return;
+
+            if (entries.length === 0) {
                 cell.innerHTML = '<div class="slot-content slot-empty">Free</div>';
+                return;
             }
+
+            const sorted = [...entries].sort((a, b) => {
+                if (a.type !== b.type) return a.type === 'lecture' ? -1 : 1;
+                if (a.type === 'section') return (a.half || 0) - (b.half || 0);
+                return 0;
+            });
+            const isSplit = sorted.every(e => e.type === 'section');
+
+            cell.innerHTML = `
+                <div class="slot-stack ${isSplit ? 'slot-split' : ''}">
+                    ${sorted.map(e => `
+                        <div class="slot-content slot-confirmed ${e.type === 'section' ? `slot-section slot-half-height slot-half-${e.half || ''}` : ''}"
+                             data-entry-id="${escHtml(e.entryId)}"
+                             draggable="true"
+                             style="background:${escHtml(e.color)};color:white;cursor:move;">
+                            ${e.type === 'section' ? '<span class="sec-badge">SEC</span>' : ''}
+                            <div class="slot-subject">${escHtml(e.name)}</div>
+                            <div class="slot-doctor">${escHtml(e.doctor)}</div>
+                            <div class="slot-group">${escHtml(e.group)}</div>
+                            <div class="slot-delete-hint">Tap for actions</div>
+                        </div>`).join('')}
+                </div>`;
+
+            cell.querySelectorAll('.slot-confirmed').forEach(div => {
+                const eid = div.getAttribute('data-entry-id');
+                // HTML5 DnD (desktop)
+                div.addEventListener('dragstart', e => handleDragStart(e, day, slot.id, eid));
+                div.addEventListener('dragend',   handleDragEnd);
+                // Pointer-based touch DnD (mobile/tablet)
+                initTouchDrag(div, day, slot.id, eid);
+                // Quick actions
+                div.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const entry = getCellEntries(key).find(i => i.entryId === eid);
+                    if (entry) openQuickActions(entry, e);
+                });
+            });
         });
     });
 }
 
+// ── 18. Clear Preview ─────────────────────────────────────────
 function clearPreview() {
     document.querySelectorAll('.preview-highlight').forEach(cell => {
         cell.classList.remove('preview-highlight');
-        const key = `${cell.dataset.day}-${cell.dataset.slot}`;
+        const key     = `${cell.dataset.day}-${cell.dataset.slot}`;
         const entries = getCellEntries(key);
-        if (entries.length === 0) {
-            cell.innerHTML = '<div class="slot-content slot-empty">Free</div>';
-        }
+        cell.innerHTML = entries.length === 0
+            ? '<div class="slot-content slot-empty">Free</div>'
+            : '';   // renderSchedule will fill it in
+        delete _lastRenderHash[key];
     });
+    if (document.querySelectorAll('.preview-highlight').length === 0 && previewData) {
+        renderSchedule();
+    }
 }
 
+// ── 19. Reset ─────────────────────────────────────────────────
 function resetSchedule() {
-    if (confirm('Are you sure you want to reset your schedule?')) {
-        selectedYear = null;
-        scheduleData = {};
-        previewData = null;
-        draggedSlot = null;
-        closeQuickActions();
-        
-        document.getElementById('subjectSection').style.display = 'none';
-        document.getElementById('scheduleSection').style.display = 'none';
-        
-        document.querySelectorAll('.year-card').forEach(card => {
-            card.classList.remove('active');
-        });
-    }
+    if (!confirm('Are you sure you want to reset your schedule?')) return;
+    selectedYear    = null;
+    scheduleData    = {};
+    previewData     = null;
+    draggedSlot     = null;
+    _lastRenderHash = {};
+    closeQuickActions();
+    document.getElementById('subjectSection').style.display  = 'none';
+    document.getElementById('scheduleSection').style.display = 'none';
+    document.querySelectorAll('.year-card').forEach(c => c.classList.remove('active'));
 }
 
-// ✅ 4. Feature: Export Functionality FIXED
+// ── 20. Export ────────────────────────────────────────────────
+//
+// Root cause of mobile crop:
+//   The wrapper div (.schedule-table-wrapper) has overflow-x:auto.
+//   html2canvas respects that clip boundary, so it only renders
+//   the visible viewport width — off-screen columns are cut off.
+//
+// Fix strategy — captureFullTable():
+//   1. Measure the FULL natural dimensions of the inner <table>
+//      (scrollWidth × scrollHeight) BEFORE html2canvas is called,
+//      while the real DOM is still intact.
+//   2. Pass those pixel values to html2canvas as explicit `width`
+//      and `windowWidth` overrides so the library allocates a
+//      canvas large enough for the whole table.
+//   3. Use `onclone` to patch only the cloned document:
+//      – Remove overflow clipping from the wrapper and every
+//        ancestor up to <body> so nothing clips the render.
+//      – Force the cloned wrapper and table to their full natural
+//        widths so the layout engine doesn't re-collapse them.
+//      – Hide the scrollbar track that would otherwise appear
+//        at the bottom of the cloned wrapper.
+//   The real DOM is never mutated, so the page stays interactive
+//   while the export is running.
+
+async function captureFullTable() {
+    const wrapper = document.getElementById('scheduleTableContainer');
+    const table   = wrapper.querySelector('.schedule-table');
+
+    // Measure true full dimensions from the inner table element,
+    // which is never clipped (only the wrapper clips it visually).
+    const fullWidth  = table.scrollWidth;
+    const fullHeight = table.scrollHeight;
+
+    const canvas = await html2canvas(wrapper, {
+        backgroundColor: '#ffffff',
+        scale:           2,
+        logging:         false,
+        useCORS:         true,
+
+        // Tell html2canvas the canvas dimensions it must allocate.
+        // Without these, it defaults to the element's clientWidth
+        // (the clipped viewport width on mobile).
+        width:       fullWidth,
+        height:      fullHeight,
+
+        // windowWidth must also match so percentage-based layouts
+        // inside the clone don't re-calculate against a small viewport.
+        windowWidth: fullWidth,
+
+        // onclone receives the cloned document just before rendering.
+        // We patch overflow and sizing here — the real DOM is untouched.
+        onclone(clonedDoc) {
+            // ── 1. Remove overflow clipping on the wrapper ──────────
+            const clonedWrapper = clonedDoc.getElementById('scheduleTableContainer');
+            clonedWrapper.style.overflow   = 'visible';
+            clonedWrapper.style.width      = `${fullWidth}px`;
+            clonedWrapper.style.maxWidth   = 'none';
+            clonedWrapper.style.boxShadow  = 'none'; // shadow would bleed outside
+            clonedWrapper.style.borderRadius = '0';
+
+            // ── 2. Force the cloned table to its natural width ──────
+            const clonedTable = clonedWrapper.querySelector('.schedule-table');
+            if (clonedTable) {
+                clonedTable.style.width    = `${fullWidth}px`;
+                clonedTable.style.minWidth = 'none';
+            }
+
+            // ── 3. Walk ancestors: clear any overflow that could clip
+            //       the render (main-card, container, body, etc.) ────
+            let ancestor = clonedWrapper.parentElement;
+            while (ancestor && ancestor !== clonedDoc.body) {
+                ancestor.style.overflow  = 'visible';
+                ancestor.style.maxWidth  = 'none';
+                ancestor.style.width     = `${fullWidth}px`;
+                ancestor = ancestor.parentElement;
+            }
+            // Body itself just needs overflow cleared
+            if (clonedDoc.body) {
+                clonedDoc.body.style.overflow = 'visible';
+                clonedDoc.body.style.width    = `${fullWidth}px`;
+            }
+
+            // ── 4. Inject a rule to hide the scrollbar track that
+            //       the cloned wrapper would otherwise render ─────────
+            const style = clonedDoc.createElement('style');
+            style.textContent = `
+                #scheduleTableContainer::-webkit-scrollbar { display: none !important; }
+                #scheduleTableContainer { scrollbar-width: none !important; }
+            `;
+            clonedDoc.head.appendChild(style);
+        },
+    });
+
+    return canvas;
+}
+
 async function downloadAsImage() {
-    const table = document.getElementById('scheduleTableContainer');
-    if (!table) {
-        alert('⚠️ Schedule table not found!');
-        return;
-    }
-    
-    if (!window.html2canvas) {
-        alert('⚠️ html2canvas library not loaded. Please refresh the page.');
-        return;
-    }
-    
+    const wrapper = document.getElementById('scheduleTableContainer');
+    if (!wrapper)            { alert('⚠️ Schedule table not found!'); return; }
+    if (!window.html2canvas) { alert('⚠️ html2canvas not loaded. Please refresh.'); return; }
+
     try {
-        clearPreview();
-        clearDragHighlights();
-        closeQuickActions();
-        
-        const canvas = await html2canvas(table, { 
-            backgroundColor: '#ffffff', 
-            scale: 2,
-            logging: false,
-            useCORS: true
-        });
-        
-        const link = document.createElement('a');
-        const timestamp = new Date().toISOString().split('T')[0];
-        link.download = `BIS_Schedule_Year${selectedYear}_${timestamp}.png`;
-        link.href = canvas.toDataURL('image/png');
+        clearPreview(); clearDragHighlights(); closeQuickActions();
+
+        const canvas = await captureFullTable();
+        const link   = document.createElement('a');
+        link.download = `BIS_Schedule_Year${selectedYear}_${new Date().toISOString().split('T')[0]}.png`;
+        link.href     = canvas.toDataURL('image/png');
         link.click();
-        
-        console.log(' Schedule exported as image successfully');
-    } catch (error) {
-        alert(' Error creating image: ' + error.message);
-        console.error('Export error:', error);
+    } catch (err) {
+        alert('Error creating image: ' + err.message);
+        console.error('[BIS] Export error:', err);
     }
 }
 
 async function downloadAsPDF() {
-    const table = document.getElementById('scheduleTableContainer');
-    
-    if (!table) {
-        alert('⚠️ Schedule table not found!');
-        return;
-    }
-    
-    if (!window.jspdf || !window.jspdf.jsPDF) {
-        alert('⚠️ jsPDF library not loaded. Please refresh the page.');
-        return;
-    }
-    
+    const wrapper = document.getElementById('scheduleTableContainer');
+    if (!wrapper)             { alert('⚠️ Schedule table not found!'); return; }
+    if (!window.jspdf?.jsPDF) { alert('⚠️ jsPDF not loaded. Please refresh.'); return; }
+
     try {
-        clearPreview();
-        clearDragHighlights();
-        closeQuickActions();
-        
-        const canvas = await html2canvas(table, {
-            backgroundColor: '#ffffff',
-            scale: 2,
-            logging: false,
-            useCORS: true
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
+        clearPreview(); clearDragHighlights(); closeQuickActions();
+
+        const canvas    = await captureFullTable();
         const { jsPDF } = window.jspdf;
-        
-        const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-        });
-        
-        const imgWidth = 280;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        const x = (297 - imgWidth) / 2;
-        
-        pdf.addImage(imgData, 'PNG', x, 10, imgWidth, imgHeight);
-        
-        const timestamp = new Date().toISOString().split('T')[0];
-        pdf.save(`BIS_Schedule_Year${selectedYear}_${timestamp}.pdf`);
-        
-        console.log('Schedule exported as PDF successfully');
-    } catch (error) {
-        alert(' Error creating PDF: ' + error.message);
-        console.error('PDF export error:', error);
+
+        // Landscape A4: printable area 277 × 190 mm (with 10 mm margins)
+        const pdf        = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        const pageW      = 297;  // A4 landscape width  in mm
+        const pageH      = 210;  // A4 landscape height in mm
+        const marginX    = 10;
+        const marginY    = 10;
+        const imgWidth   = pageW - marginX * 2;                        // 277 mm
+        const imgHeight  = (canvas.height / canvas.width) * imgWidth;  // preserve aspect ratio
+        const centeredY  = Math.max(marginY, (pageH - imgHeight) / 2); // vertically centre if it fits
+
+        pdf.addImage(
+            canvas.toDataURL('image/png'),
+            'PNG',
+            marginX,
+            centeredY,
+            imgWidth,
+            imgHeight
+        );
+        pdf.save(`BIS_Schedule_Year${selectedYear}_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err) {
+        alert('Error creating PDF: ' + err.message);
+        console.error('[BIS] PDF export error:', err);
     }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // ── Close quick-actions menu on outside click ──────────────────────────
-    document.addEventListener('click', function(event) {
+// ── 21. Single DOMContentLoaded — FIX M-6 ───────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    // Firebase
+    if (typeof firebase !== 'undefined' && firebase.apps.length) {
+        loadScheduleFromFirebase();
+    }
+
+    // Close quick-actions on outside click
+    document.addEventListener('click', e => {
         const menu = document.getElementById('quickActionsMenu');
-        if (menu && !menu.contains(event.target)) {
-            closeQuickActions();
-        }
+        if (menu && !menu.contains(e.target)) closeQuickActions();
     });
 
-    // ── Static toggle buttons (Lectures / Sections) ────────────────────────
-    // Buttons live permanently in index.html; only their .active class and
-    // the subject list need to change — no DOM recreation on every toggle.
+    // Static Lecture / Section toggle buttons
     document.querySelectorAll('.selector-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const mode = this.getAttribute('data-mode');
             if (mode === selectionMode || !selectedYear) return;
             selectionMode = mode;

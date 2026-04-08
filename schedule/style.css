@@ -484,6 +484,8 @@ body::before {
 
 .drag-target-highlight {
     position: relative;
+    background-color: color-mix(in srgb, var(--drag-color, var(--bis-accent)) 18%, transparent) !important;
+    border: 2px dashed var(--drag-color, var(--bis-accent)) !important;
     animation: pulse-gentle 1.5s ease-in-out infinite;
 }
 
@@ -607,6 +609,13 @@ body::before {
 
 .slot-confirmed:hover .slot-delete-hint {
     display: block;
+}
+
+/* Always show action hint on touch devices (no hover state) */
+@media (hover: none) {
+    .slot-delete-hint {
+        display: block;
+    }
 }
 
 .slot-empty {
@@ -805,20 +814,42 @@ body::before {
         grid-template-columns: 1fr;
     }
 
+    /* ── Mobile Table Fix (M-1) ─────────────────────────────
+       The wrapper already has overflow-x: auto. We add a hard
+       min-width on the table so it stays readable, and shrink
+       cell padding aggressively so the content fits on phone. */
     .schedule-table {
-        font-size: 0.8rem;
+        font-size: 0.72rem;
+        min-width: 520px; /* prevents the table collapsing to unreadable widths */
     }
 
-    .schedule-table th,
+    .schedule-table th {
+        padding: 0.6rem 0.3rem;
+        font-size: 0.7rem;
+    }
+
     .schedule-table td {
-        padding: 0.5rem 0.25rem;
+        padding: 0.3rem 0.2rem;
+        min-height: 60px;
     }
 
-    .slot-content {
-        padding: 0.5rem;
-        font-size: 0.75rem;
-        min-height: 50px;
+    .schedule-table .day-column {
+        min-width: 72px;   /* tightest legible day label */
+        padding-left: 0.4rem;
+        font-size: 0.72rem;
     }
+
+    /* Shrink slot content on mobile so cells don't blow up */
+    .slot-content {
+        padding: 0.35rem 0.25rem;
+        font-size: 0.68rem;
+        min-height: 44px;
+    }
+
+    .slot-subject { font-size: 0.72rem; }
+    .slot-doctor  { font-size: 0.62rem; }
+    .slot-group   { font-size: 0.58rem; }
+    .slot-hint, .slot-delete-hint { font-size: 0.56rem; }
 
     .schedule-actions {
         width: 100%;

@@ -562,6 +562,11 @@ body::before {
     -webkit-user-select: none;
     -ms-user-select: none;
     -webkit-user-drag: element;
+    /* touch-action: none tells the browser to never handle scroll/pan/zoom
+       on draggable slot cards. Without this, Chrome and Safari fire a
+       pointercancel after ~1 second inside overflow-x:auto containers,
+       aborting the touch drag mid-gesture on Vercel (production). */
+    touch-action: none;
 }
 
 .slot-confirmed:hover {

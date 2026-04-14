@@ -629,6 +629,13 @@ function handleDragStart(e, day, slotId, entryId) {
     e.currentTarget.style.opacity = '0.5';
     e.dataTransfer.effectAllowed  = 'move';
     e.dataTransfer.setData('text/plain', entryId);
+
+    // stopPropagation prevents document-level ondragstart handlers
+    // (set by the disable-devtool library) from returning false and
+    // cancelling the drag after our handler has already run.
+    // This is the safety-net that makes desktop DnD work on Vercel.
+    e.stopPropagation();
+
     highlightValidDropTargets(entry);
 }
 

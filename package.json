@@ -1,0 +1,21 @@
+{
+  "name": "bis-tools",
+  "version": "1.0.0",
+  "description": "BIS Student Portal - Tools for GPA calculation and schedule building",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'",
+    "lint": "echo 'No linting configured for static site'"
+  },
+  "keywords": [
+    "gpa-calculator",
+    "schedule-builder",
+    "student-portal"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@vercel/speed-insights": "^1.0.12"
+  }
+}
